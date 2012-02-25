@@ -45,7 +45,7 @@ public class Music {
 	 * Construct a new Music with the given music data and the Mixer with which
 	 * to register this Music.
 	 * @param data music data
-	 * @param Mixer with which this Music is registered
+	 * @param mixer Mixer with which this Music is registered
 	 */
 	public Music(byte[] data, Mixer mixer) {
 		this.data = data;
