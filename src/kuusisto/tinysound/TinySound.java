@@ -222,7 +222,8 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Music by a resource name.
+	 * Load a Music by a resource name.  The resource must be on the classpath
+	 * for this to work.
 	 * @param name name of the Music resource
 	 * @return Music resource as specified, null if not found/loaded
 	 */
@@ -235,6 +236,10 @@ public class TinySound {
 		//check for failure
 		if (name == null) {
 			return null;
+		}
+		//check for correct naming
+		if (!name.startsWith("/")) {
+			name = "/" + name;
 		}
 		InputStream stream = TinySound.class.getResourceAsStream(name);
 		return TinySound.loadMusic(stream);
@@ -321,7 +326,8 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Sound by a resource name.
+	 * Load a Sound by a resource name.  The resource must be on the classpath
+	 * for this to work.
 	 * @param name name of the Sound resource
 	 * @return Sound resource as specified, null if not found/loaded
 	 */
@@ -334,6 +340,10 @@ public class TinySound {
 		//check for failure
 		if (name == null) {
 			return null;
+		}
+		//check for correct naming
+		if (!name.startsWith("/")) {
+			name = "/" + name;
 		}
 		InputStream stream = TinySound.class.getResourceAsStream(name);
 		return TinySound.loadSound(stream);
