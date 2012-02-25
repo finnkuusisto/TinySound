@@ -14,7 +14,7 @@ Using TinySound
 ---------------
 There are 3 classes that you need to know when using TinySound: TinySound, Music
 and Sound.  TinySound is the main system class, Music is an abstraction for
-music, and Sound is an abstraction for Sound.  Simple.
+music, and Sound is an abstraction for a sound effect.  Simple.
 
 -TinySound-
 There are really only 2 steps you need to worry about with the TinySound class.
