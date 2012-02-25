@@ -1,0 +1,52 @@
+About
+-----
+TinySound is a simple sound system that wraps the standard Java sound libraries.
+It is "tiny" in that it is intended to have a small, easy-to-use interface with
+everything that you need in a simple sound system and nothing that you don't.
+
+License
+-------
+TinySound is licensed under the BSD 2-Clause license.  A copy of the license can
+be found in the header of every source file as well as in the LICENSE file
+included with the TinySound system.
+
+Using TinySound
+---------------
+There are 3 classes that you need to know when using TinySound: TinySound, Music
+and Sound.  TinySound is the main system class, Music is an abstraction for
+music, and Sound is an abstraction for Sound.  Simple.
+
+-TinySound-
+There are really only 2 steps you need to worry about with the TinySound class.
+1. Initialization
+2. Shutdown
+
+1. Initialization is accomplished via one of the two init() functions:
+-The first one (and probably the only one you will care about) takes no
+arguments and sets up the system for you to automatically write any sound data
+to the speakers 40 times per second.  TinySound creates another thread to
+perform updates.  This should be sufficient in almost all use cases.
+-The second one allows you to specify at what rate you would like sound data to
+be written to the speakers and whether or not TinySound should write the data
+automatically or if you would like to handle those updates yourself.
+Note:  If you choose to not have TinySound automatically update, you must call
+one of the update() methods yourself at the rate specified.  See the Javadocs
+for more detail.
+
+2. Shutdown is accomplished via the shutdown() function.  It is especially
+important that you shutdown TinySound if the system has been initialized to
+perform automatic updates so it can stop the update thread.
+
+-Music-
+You load Music objects via the TinySound loadMusic() functions.  Music objects
+can be started, stopped, paused, resumed, and looped from specified positions.
+If you are done using a particular Music object, you can also unload its sound
+data from the system via its unload() function.  See the Javadocs for more
+detail.
+
+-Sound-
+You load Sound objects via the TinySound loadSound() functions.  Sound objects
+work differently from Music objects as you can only play them (no pausing etc.).
+When a Sound is played it is queued to be played from the speakers once.  Of
+course, you can play a Sound multiple times in an overlapping fashion so it is
+generally useful for sound effects.

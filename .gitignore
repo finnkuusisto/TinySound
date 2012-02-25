@@ -1,0 +1,17 @@
+############
+# Compiled #
+############
+*.class
+*.jar
+
+#################
+# IDE Generated #
+#################
+.classpath
+.project
+.settings
+
+########
+# Misc #
+########
+*~
