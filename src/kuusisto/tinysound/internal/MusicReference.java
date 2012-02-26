@@ -35,7 +35,8 @@ package kuusisto.tinysound.internal;
  */
 public class MusicReference {
 
-	private byte[] data;
+	private byte[] left;
+	private byte[] right;
 	private boolean playing;
 	private boolean loop;
 	private int loopPosition;
@@ -43,16 +44,18 @@ public class MusicReference {
 	private double volume;
 	
 	/**
-	 * 
-	 * @param data
-	 * @param playing
-	 * @param loop
-	 * @param position
-	 * @param volume
+	 * Construct a new MusicReference with the given audio data and settings.
+	 * @param left left channel of music data
+	 * @param right right channel of music data
+	 * @param playing true if the music should be playing
+	 * @param loop true if the music should loop
+	 * @param position byte index position in music data
+	 * @param volume volume to play the music
 	 */
-	public MusicReference(byte[] data, boolean playing, boolean loop,
-			int loopPosition, int position, double volume) {
-		this.data = data;
+	public MusicReference(byte[] left, byte[] right, boolean playing,
+			boolean loop, int loopPosition, int position, double volume) {
+		this.left = left;
+		this.right = right;
 		this.playing = playing;
 		this.loop = loop;
 		this.loopPosition = loopPosition;
@@ -121,7 +124,7 @@ public class MusicReference {
 	 * @param position the byte index to set
 	 */
 	public synchronized void setPosition(int position) {
-		if (position >= 0 && position < this.data.length) {
+		if (position >= 0 && position < this.left.length) {
 			this.position = position;
 		}
 	}
@@ -131,7 +134,7 @@ public class MusicReference {
 	 * @param loopPosition the loop-position byte index to set
 	 */
 	public synchronized void setLoopPosition(int loopPosition) {
-		if (loopPosition >= 0 && loopPosition < this.data.length) {
+		if (loopPosition >= 0 && loopPosition < this.left.length) {
 			this.loopPosition = loopPosition;
 		}
 	}
@@ -149,44 +152,52 @@ public class MusicReference {
 	 * @return number of bytes remaining
 	 */
 	public synchronized int bytesAvailable() {
-		return this.data.length - this.position;
+		return this.left.length - this.position;
 	}
 	
 	/**
 	 * Get the next byte from the music data.
-	 * @return the next byte
+	 * @param data length-2 array to write in next byte from each channel
 	 */
-	public synchronized byte nextByte() {
-		byte ret = this.data[this.position];
+	public synchronized void nextByte(byte[] data) {
+		//left channel
+		data[0] = this.left[position];
+		//right channel
+		data[1] = this.right[position];
 		this.position++;
 		//wrap if looping
-		if (this.loop && this.position >= this.data.length) {
+		if (this.loop && this.position >= this.left.length) {
 			this.position = this.loopPosition;
 		}
-		return ret;
 	}
 	
 	/**
 	 * Get the next two bytes from the music data in the specified endianness.
+	 * @param data length-2 array to write in next two bytes from each channel
 	 * @param bigEndian true if the bytes should be read big-endian
-	 * @return the next two bytes in the specified endianness
 	 */
-	public synchronized int nextTwoBytes(boolean bigEndian) {
-		int ret = 0;
+	public synchronized void nextTwoBytes(int[] data, boolean bigEndian) {
 		if (bigEndian) {
-			ret = ((this.data[this.position] << 8) |
-					(this.data[this.position + 1] & 0xFF));
+			//left
+			data[0] = ((this.left[this.position] << 8) |
+					(this.left[this.position + 1] & 0xFF));
+			//right
+			data[1] = ((this.right[this.position] << 8) |
+					(this.right[this.position + 1] & 0xFF));
 		}
 		else {
-			ret = ((this.data[this.position + 1] << 8) |
-					(this.data[this.position] & 0xFF));
+			//left
+			data[0] = ((this.left[this.position + 1] << 8) |
+					(this.left[this.position] & 0xFF));
+			//right
+			data[1] = ((this.right[this.position + 1] << 8) |
+					(this.right[this.position] & 0xFF));
 		}
 		this.position += 2;
 		//wrap if looping
-		if (this.loop && this.position >= this.data.length) {
+		if (this.loop && this.position >= this.left.length) {
 			this.position = this.loopPosition;
 		}
-		return ret;
 	}
 	
 }

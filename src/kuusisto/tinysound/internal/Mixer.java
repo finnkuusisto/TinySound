@@ -39,6 +39,7 @@ public class Mixer {
 	
 	private List<MusicReference> musics;
 	private List<SoundReference> sounds;
+	private int[] dataBuf; //buffer for reading sound data
 	
 	/**
 	 * Construct a new Mixer for TinySound system.
@@ -46,6 +47,7 @@ public class Mixer {
 	public Mixer() {
 		this.musics = new ArrayList<MusicReference>();
 		this.sounds = new ArrayList<SoundReference>();
+		this.dataBuf = new int[2]; //2-channel
 	}
 	
 	/**
@@ -118,16 +120,17 @@ public class Mixer {
 	 * @return number of bytes read into buffer
 	 */
 	public int read(byte[] data, int length) {
-		//*****************************************//
-		//  assume big-endian, 16-bit, signed PCM  //
-		//*****************************************//
+		//*********************************************//
+		//assume big-endian, stereo, 16-bit, signed PCM//
+		//*********************************************//
 		int numRead = 0;
 		boolean bytesRead = true; //terminate early if out of bytes
-		for (int i = 0; i < length && i < data.length && bytesRead; i += 2) {
+		for (int i = 0; i < length && i < data.length && bytesRead; i += 4) {
 			//first assume we are done
 			bytesRead = false;
 			//need to track value across audio sources
-			double value = 0.0;
+			double leftValue = 0.0;
+			double rightValue = 0.0;
 			//go through all the music first
 			synchronized (this.musics) {
 				for (int m = 0; m < this.musics.size(); m++) {
@@ -135,9 +138,10 @@ public class Mixer {
 					//is the music playing and are there bytes available
 					if (music.getPlaying() && music.bytesAvailable() > 0) {
 						//add this music to the mix by volume
-						int next = music.nextTwoBytes(true);
+						music.nextTwoBytes(this.dataBuf, true);
 						double volume = music.getVolume();
-						value += (next * volume);
+						leftValue += (this.dataBuf[0] * volume);
+						rightValue += (this.dataBuf[1] * volume);
 						//we know we aren't done yet now
 						bytesRead = true;
 					}
@@ -150,10 +154,10 @@ public class Mixer {
 					//are there bytes available
 					if (sound.bytesAvailable() > 0) {
 						//add this sound to the mix by volume
-						int next = ((sound.nextByte() << 8) | 
-								(sound.nextByte() & 0xFF));
+						sound.nextTwoBytes(this.dataBuf, true);
 						double volume = sound.getVolume();
-						value += (next * volume);
+						leftValue += (this.dataBuf[0] * volume);
+						rightValue += (this.dataBuf[1] * volume);
 						//we know we aren't done yet now
 						bytesRead = true;
 						//remove the reference if done
@@ -168,17 +172,28 @@ public class Mixer {
 			}
 			//if we actually read bytes, store in the buffer
 			if (bytesRead) {
-				int finalValue = (int)value;
+				int finalLeftValue = (int)leftValue;
+				int finalRightValue = (int)rightValue;
 				//clipping
-				if (finalValue > Short.MAX_VALUE) {
-					finalValue = Short.MAX_VALUE;
+				if (finalLeftValue > Short.MAX_VALUE) {
+					finalLeftValue = Short.MAX_VALUE;
 				}
-				else if (finalValue < Short.MIN_VALUE) {
-					finalValue = Short.MIN_VALUE;
+				else if (finalLeftValue < Short.MIN_VALUE) {
+					finalLeftValue = Short.MIN_VALUE;
 				}
-				data[i] = (byte)((finalValue >> 8) & 0xFF); //left byte
-				data[i + 1] = (byte)(finalValue & 0xFF); //right byte
-				numRead += 2;
+				if (finalRightValue > Short.MAX_VALUE) {
+					finalRightValue = Short.MAX_VALUE;
+				}
+				else if (finalRightValue < Short.MIN_VALUE) {
+					finalRightValue = Short.MIN_VALUE;
+				}
+				//left channel bytes
+				data[i] = (byte)((finalLeftValue >> 8) & 0xFF); //MSB
+				data[i + 1] = (byte)(finalLeftValue & 0xFF); //LSB
+				//then right channel bytes
+				data[i + 2] = (byte)((finalRightValue >> 8) & 0xFF); //MSB
+				data[i + 3] = (byte)(finalRightValue & 0xFF); //LSB
+				numRead += 4;
 			}
 		}
 		return numRead;

@@ -37,20 +37,24 @@ import kuusisto.tinysound.internal.MusicReference;
  */
 public class Music {
 	
-	private byte[] data;
+	private byte[] left;
+	private byte[] right;
 	private Mixer mixer;
 	private MusicReference reference;
 	
 	/**
 	 * Construct a new Music with the given music data and the Mixer with which
 	 * to register this Music.
-	 * @param data music data
+	 * @param left left channel of music data
+	 * @param right right channel of music data
 	 * @param mixer Mixer with which this Music is registered
 	 */
-	public Music(byte[] data, Mixer mixer) {
-		this.data = data;
+	public Music(byte[] left, byte[] right, Mixer mixer) {
+		this.left = left;
+		this.right = right;
 		this.mixer = mixer;
-		this.reference = new MusicReference(this.data, false, false, 0, 0, 1.0);
+		this.reference = new MusicReference(this.left, this.right, false, false,
+				0, 0, 1.0);
 		this.mixer.registerMusicReference(this.reference);
 	}
 	
@@ -199,7 +203,8 @@ public class Music {
 		//unregister the reference
 		this.mixer.unRegisterMusicReference(this.reference);
 		this.mixer = null;
-		this.data = null;
+		this.left = null;
+		this.right = null;
 		this.reference = null;
 	}
 

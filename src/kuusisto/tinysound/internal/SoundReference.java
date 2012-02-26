@@ -37,16 +37,22 @@ public class SoundReference {
 
 	public final int SOUND_ID; //parent Sound
 	
-	private byte[] data;
+	private byte[] left;
+	private byte[] right;
 	private int position;
 	private double volume;
 	
 	/**
 	 * Construct a new SoundReference with the given reference data.
-	 * @param data sound data
+	 * @param left left channel of sound data
+	 * @param right right channel of sound data
+	 * @param volume volume at which to play the sound
+	 * @param soundID ID of the Sound for which this is a reference
 	 */
-	public SoundReference(byte[] data, double volume, int soundID) {
-		this.data = data;
+	public SoundReference(byte[] left, byte[] right, double volume,
+			int soundID) {
+		this.left = left;
+		this.right = right;
 		this.volume = (volume >= 0.0) ? volume : 1.0;
 		this.position = 0;
 		this.SOUND_ID = soundID;
@@ -65,36 +71,44 @@ public class SoundReference {
 	 * @return number of bytes remaining
 	 */
 	public int bytesAvailable() {
-		return this.data.length - this.position;
+		return this.left.length - this.position;
 	}
 	
 	/**
 	 * Get the next byte from the sound data.
-	 * @return the next byte
+	 * @param data length-2 array to write in next byte from each channel
 	 */
-	public byte nextByte() {
-		byte ret = this.data[this.position];
+	public void nextByte(byte[] data) {
+		//left channel
+		data[0] = this.left[position];
+		//right channel
+		data[1] = this.right[position];
 		this.position++;
-		return ret;
 	}
 	
 	/**
 	 * Get the next two bytes from the sound data in the specified endianness.
+	 * @param data length-2 array to write in next two bytes from each channel
 	 * @param bigEndian true if the bytes should be read big-endian
-	 * @return the next two bytes in the specified endianness
 	 */
-	public int nextTwoBytes(boolean bigEndian) {
-		int ret = 0;
+	public void nextTwoBytes(int[] data, boolean bigEndian) {
 		if (bigEndian) {
-			ret = ((this.data[this.position] << 8) |
-					(this.data[this.position + 1] & 0xFF));
+			//left
+			data[0] = ((this.left[this.position] << 8) |
+					(this.left[this.position + 1] & 0xFF));
+			//right
+			data[1] = ((this.right[this.position] << 8) |
+					(this.right[this.position + 1] & 0xFF));
 		}
 		else {
-			ret = ((this.data[this.position + 1] << 8) |
-					(this.data[this.position] & 0xFF));
+			//left
+			data[0] = ((this.left[this.position + 1] << 8) |
+					(this.left[this.position] & 0xFF));
+			//right
+			data[1] = ((this.right[this.position + 1] << 8) |
+					(this.right[this.position] & 0xFF));
 		}
 		this.position += 2;
-		return ret;
 	}
 
 }

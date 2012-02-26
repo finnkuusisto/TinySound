@@ -39,18 +39,21 @@ public class Sound {
 	
 	private static int soundCount = 0;
 	
-	private byte[] data;
+	private byte[] left;
+	private byte[] right;
 	private Mixer mixer;
 	private final int ID; //unique ID to match references
 	
 	/**
 	 * Construct a new Sound with the given data and Mixer which will handle
 	 * handle this Sound.
-	 * @param data sound data
+	 * @param left left channel of sound data
+	 * @param right right channel of sound data
 	 * @param mixer Mixer that will handle this Sound
 	 */
-	public Sound(byte[] data, Mixer mixer) {
-		this.data = data;
+	public Sound(byte[] left, byte[] right, Mixer mixer) {
+		this.left = left;
+		this.right = right;
 		this.mixer = mixer;
 		//get the next ID
 		this.ID = Sound.soundCount;
@@ -70,7 +73,8 @@ public class Sound {
 	 */
 	public void play(double volume) {
 		//dispatch a SoundReference to the mixer
-		SoundReference ref = new SoundReference(this.data, volume, this.ID);
+		SoundReference ref = new SoundReference(this.left, this.right, volume,
+				this.ID);
 		this.mixer.registerSoundReference(ref);
 	}
 	
@@ -81,7 +85,8 @@ public class Sound {
 	public void unload() {
 		this.mixer.unRegisterSoundReference(this.ID);
 		this.mixer = null;
-		this.data = null;
+		this.left = null;
+		this.right = null;
 	}
 
 }
