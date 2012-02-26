@@ -63,7 +63,7 @@ public class UpdateRunner implements Runnable {
 		@Override
 		public void run() {
 			this.running.set(true);
-			long nanosPerUpdate = 1000000000 / this.updateRate;
+			long nanosPerUpdate = 1000000000L / this.updateRate;
 			long lastUpdate = 0;
 			//keep running until told to stop
 			while (this.running.get()) {
@@ -73,7 +73,7 @@ public class UpdateRunner implements Runnable {
 				}
 				//give the CPU back to the OS for a bit
 				try {
-					Thread.sleep(0, 500000);
+					Thread.sleep(0, 100000);
 				} catch (InterruptedException e) {}
 			}
 		}

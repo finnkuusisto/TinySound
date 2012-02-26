@@ -109,7 +109,7 @@ public class TinySound {
 		if (TinySound.inited) {
 			return;
 		}
-		//first try to open a line to the speakers
+		//try to open a line to the speakers
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class,
 				TinySound.FORMAT);
 		if (!javax.sound.sampled.AudioSystem.isLineSupported(info)) {
@@ -129,18 +129,19 @@ public class TinySound {
 		//now initialize the other stuff
 		TinySound.mixer = new Mixer();
 		TinySound.updateRate = updateRate;
-		//make the buffer the size needed for update rate
-		double bytesPerUpdate = (((double)TinySound.FORMAT.getSampleRate() *
-				TinySound.FORMAT.getFrameSize()) / updateRate);
-		int bufSize = (int)bytesPerUpdate + 1;
-		bufSize += (bufSize % 2 == 0) ? 0 : 1; //make it even
+		//compute the buffer size needed for update rate
+		double framesPerUpdate = TinySound.FORMAT.getSampleRate() / updateRate;
+		double bytesPerUpdate =
+			framesPerUpdate * TinySound.FORMAT.getFrameSize();
+		int bufSize = //make sure it's a multiple of frame size
+			((int)framesPerUpdate + 1) * TinySound.FORMAT.getFrameSize();
 		TinySound.audioBuffer = new byte[bufSize];
 		TinySound.numBytesRead = 0;
 		//now calculate frame drift per update
 		double byteDriftPerUpdate = (double)bufSize - bytesPerUpdate;
 		TinySound.driftFramesPerUpdate = byteDriftPerUpdate /
 			TinySound.FORMAT.getFrameSize();
-		if (TinySound.driftFramesPerUpdate <= 0.0001) {
+		if (TinySound.driftFramesPerUpdate < 0.0) { //just in case
 			TinySound.driftFramesPerUpdate = 0.0;
 		}
 		TinySound.driftFramesAccrued = 0.0;
@@ -161,6 +162,12 @@ public class TinySound {
 			return;
 		}
 		TinySound.inited = false;
+		//stop the auto-updater if running
+		if (TinySound.autoUpdate) {
+			TinySound.autoUpdater.stop();
+			TinySound.autoUpdater = null;
+			TinySound.autoUpdate = false;
+		}
 		TinySound.outLine.stop();
 		TinySound.outLine.flush();
 		TinySound.mixer.clearMusic();
@@ -171,12 +178,6 @@ public class TinySound {
 		TinySound.numBytesRead = 0;
 		TinySound.driftFramesPerUpdate = 0.0;
 		TinySound.driftFramesAccrued = 0.0;
-		//stop the auto-updater if running
-		if (TinySound.autoUpdate) {
-			TinySound.autoUpdater.stop();
-			TinySound.autoUpdater = null;
-			TinySound.autoUpdate = false;
-		}
 	}
 	
 	/**
@@ -222,12 +223,12 @@ public class TinySound {
 		if (TinySound.numBytesRead <= 0) {
 			TinySound.fillAudioBuffer();
 		}
-		if (TinySound.numBytesRead <= 0) {
-			return;
-		}
 		//and write to the speakers
-		TinySound.outLine.write(TinySound.audioBuffer, 0,
-				TinySound.numBytesRead);
+		int numBytesWritten = 0;
+		while (numBytesWritten < TinySound.numBytesRead) {
+			numBytesWritten = TinySound.outLine.write(TinySound.audioBuffer,
+					numBytesWritten, TinySound.numBytesRead);
+		}
 		TinySound.numBytesRead = 0;
 		//now refill the buffer if desired
 		if (fillNextBuffer) {
@@ -239,6 +240,9 @@ public class TinySound {
 	 * Fills the audio buffer with audio data.  Also handles drift compensation.
 	 */
 	private static void fillAudioBuffer() {
+		if (!TinySound.inited) {
+			return;
+		}
 		//default to full buffer
 		int length = TinySound.audioBuffer.length;
 		//check for full frames of drift
@@ -252,10 +256,13 @@ public class TinySound {
 		//now read the bytes
 		TinySound.numBytesRead = TinySound.mixer.read(TinySound.audioBuffer,
 				length);
-		//accrue drift if no compensation
-		if (length == TinySound.audioBuffer.length) {
-			TinySound.driftFramesAccrued += TinySound.driftFramesPerUpdate;
+		//fill remainder with zeroes
+		for (int i = TinySound.numBytesRead; i < length; i++) {
+			TinySound.audioBuffer[i] = 0;
 		}
+		TinySound.numBytesRead = length;
+		//accrue drift
+		TinySound.driftFramesAccrued += TinySound.driftFramesPerUpdate;
 	}
 	
 	/**
