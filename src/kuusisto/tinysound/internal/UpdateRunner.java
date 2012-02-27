@@ -68,12 +68,14 @@ public class UpdateRunner implements Runnable {
 			//keep running until told to stop
 			while (this.running.get()) {
 				long currTime = System.nanoTime();
-				if ((currTime - lastUpdate) >= nanosPerUpdate) {
+				long delta = currTime - lastUpdate;
+				if (delta >= nanosPerUpdate) {
 					TinySound.update();
+					lastUpdate = currTime;
 				}
 				//give the CPU back to the OS for a bit
 				try {
-					Thread.sleep(0, 100000);
+					Thread.sleep(0, 500000);
 				} catch (InterruptedException e) {}
 			}
 		}

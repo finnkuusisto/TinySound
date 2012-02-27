@@ -219,18 +219,19 @@ public class TinySound {
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
 			return;
-		}		//read from the mixer (maybe this should be synchronized)
-		if (TinySound.numBytesRead <= 0) {
+		}
+		//read from the mixer if not filling for the next update
+		if (TinySound.numBytesRead <= 0 && !fillNextBuffer) {
 			TinySound.fillAudioBuffer();
 		}
 		//and write to the speakers
 		int numBytesWritten = 0;
 		while (numBytesWritten < TinySound.numBytesRead) {
-			numBytesWritten = TinySound.outLine.write(TinySound.audioBuffer,
+			numBytesWritten += TinySound.outLine.write(TinySound.audioBuffer,
 					numBytesWritten, TinySound.numBytesRead);
 		}
 		TinySound.numBytesRead = 0;
-		//now refill the buffer if desired
+		//now fill the buffer for the next update if desired
 		if (fillNextBuffer) {
 			TinySound.fillAudioBuffer();
 		}
@@ -262,7 +263,9 @@ public class TinySound {
 		}
 		TinySound.numBytesRead = length;
 		//accrue drift
-		TinySound.driftFramesAccrued += TinySound.driftFramesPerUpdate;
+		if (length == TinySound.audioBuffer.length) {
+			TinySound.driftFramesAccrued += TinySound.driftFramesPerUpdate;
+		}
 	}
 	
 	/**
