@@ -117,7 +117,7 @@ public class Mixer {
 		}
 		int numRead = 0;
 		boolean bytesRead = true; //terminate early if out of bytes
-		for (int i = offset; i < length && bytesRead; i += 4) {
+		for (int i = offset; i < (length + offset) && bytesRead; i += 4) {
 			//first assume we are done
 			bytesRead = false;
 			//need to track value across audio sources
