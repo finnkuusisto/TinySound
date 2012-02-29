@@ -149,8 +149,10 @@ public class TinySound {
 		TinySound.autoUpdate = autoUpdate;
 		if (autoUpdate) {
 			TinySound.autoUpdater = new UpdateRunner(updateRate);
+			Thread updateThread = new Thread(TinySound.autoUpdater);
+			updateThread.setDaemon(true);
 			TinySound.inited = true;
-			new Thread(TinySound.autoUpdater).start();
+			updateThread.start();
 		}
 		TinySound.inited = true;
 	}
