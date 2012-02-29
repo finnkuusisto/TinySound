@@ -116,16 +116,20 @@ public class Mixer {
 	/**
 	 * Read bytes from this Mixer.
 	 * @param data the buffer to read the bytes into
+	 * @param offset the start index to read bytes into
 	 * @param length the maximum number of bytes that should be read
 	 * @return number of bytes read into buffer
 	 */
-	public int read(byte[] data, int length) {
+	public int read(byte[] data, int offset, int length) {
 		//*********************************************//
 		//assume big-endian, stereo, 16-bit, signed PCM//
 		//*********************************************//
+		if (length < data.length) {
+			length = data.length;
+		}
 		int numRead = 0;
 		boolean bytesRead = true; //terminate early if out of bytes
-		for (int i = 0; i < length && i < data.length && bytesRead; i += 4) {
+		for (int i = offset; i < length && bytesRead; i += 4) {
 			//first assume we are done
 			bytesRead = false;
 			//need to track value across audio sources

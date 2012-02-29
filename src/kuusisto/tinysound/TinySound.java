@@ -146,11 +146,12 @@ public class TinySound {
 		}
 		TinySound.driftFramesAccrued = 0.0;
 		//start the updater if set to autoUpdate
+		TinySound.autoUpdate = autoUpdate;
 		if (autoUpdate) {
 			TinySound.autoUpdater = new UpdateRunner(updateRate);
+			TinySound.inited = true;
 			new Thread(TinySound.autoUpdater).start();
 		}
-		TinySound.autoUpdate = autoUpdate;
 		TinySound.inited = true;
 	}
 	
@@ -221,15 +222,12 @@ public class TinySound {
 			return;
 		}
 		//read from the mixer if not filling for the next update
-		if (TinySound.numBytesRead <= 0 && !fillNextBuffer) {
+		if (TinySound.numBytesRead <= 0) {
 			TinySound.fillAudioBuffer();
 		}
 		//and write to the speakers
-		int numBytesWritten = 0;
-		while (numBytesWritten < TinySound.numBytesRead) {
-			numBytesWritten += TinySound.outLine.write(TinySound.audioBuffer,
-					numBytesWritten, TinySound.numBytesRead);
-		}
+		TinySound.outLine.write(TinySound.audioBuffer, 0,
+				TinySound.numBytesRead);
 		TinySound.numBytesRead = 0;
 		//now fill the buffer for the next update if desired
 		if (fillNextBuffer) {
@@ -255,7 +253,7 @@ public class TinySound {
 			TinySound.driftFramesAccrued -= fullDriftFrames;
 		}
 		//now read the bytes
-		TinySound.numBytesRead = TinySound.mixer.read(TinySound.audioBuffer,
+		TinySound.numBytesRead = TinySound.mixer.read(TinySound.audioBuffer, 0,
 				length);
 		//fill remainder with zeroes
 		for (int i = TinySound.numBytesRead; i < length; i++) {
