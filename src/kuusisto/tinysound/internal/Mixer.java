@@ -112,9 +112,6 @@ public class Mixer {
 		//*********************************************//
 		//assume big-endian, stereo, 16-bit, signed PCM//
 		//*********************************************//
-		if (length < data.length) {
-			length = data.length;
-		}
 		int numRead = 0;
 		boolean bytesRead = true; //terminate early if out of bytes
 		for (int i = offset; i < (length + offset) && bytesRead; i += 4) {
