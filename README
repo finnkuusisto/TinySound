@@ -12,7 +12,7 @@ included with the TinySound system.
 
 Audio Formats
 -------------
-TinySound treats all audio as 16-bit, 44.1kHz, 2-channel, linear PCM data
+TinySound stores all audio as 16-bit, 44.1kHz, 2-channel, linear PCM data
 internally.  It makes an effort to convert other formats, but you should make
 sure your audio is some combination of 8-bit or 16-bit quantization, 1-channel
 or 2-channel, 44.1kHz, linear PCM.  As for container formats, TinySound should
