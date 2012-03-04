@@ -21,21 +21,12 @@ There are really only 2 steps you need to worry about with the TinySound class.
 1. Initialization
 2. Shutdown
 
-1. Initialization is accomplished via one of the two init() functions:
--The first one (and probably the only one you will care about) takes no
-arguments and sets up the system for you to automatically write any sound data
-to the speakers 40 times per second.  TinySound creates another thread to
-perform updates.  This should be sufficient in almost all use cases.
--The second one allows you to specify at what rate you would like sound data to
-be written to the speakers and whether or not TinySound should write the data
-automatically or if you would like to handle those updates yourself.
-Note:  If you choose to not have TinySound automatically update, you must call
-one of the update() methods yourself at the rate specified.  See the Javadocs
-for more detail.
+1. Initialization is accomplished via the init() function.  It takes no
+arguments and sets up the system for you to play audio data.  TinySound creates
+a daemon thread to automatically write audio data to the speakers.
 
-2. Shutdown is accomplished via the shutdown() function.  It is especially
-important that you shutdown TinySound if the system has been initialized to
-perform automatic updates so it can stop the update thread.
+2. Shutdown is accomplished via the shutdown() function.  This shuts down the
+update thread and clears resources in use.
 
 -Music-
 You load Music objects via the TinySound loadMusic() functions.  Music objects
@@ -50,3 +41,10 @@ work differently from Music objects as you can only play them (no pausing etc.).
 When a Sound is played it is queued to be played from the speakers once.  Of
 course, you can play a Sound multiple times in an overlapping fashion so it is
 generally useful for sound effects.
+
+Example
+-------
+There is a very simple example provided in the example directory.  You'll need
+sound resources with the specified names on the classpath if you want to try the
+example without modifying it.  Note that the example does not demonstrate all of
+TinySound's features.  See the Javadocs for more detail.

@@ -27,6 +27,8 @@
 package kuusisto.tinysound.internal;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.sound.sampled.SourceDataLine;
+
 import kuusisto.tinysound.TinySound;
 
 /**
@@ -40,17 +42,18 @@ import kuusisto.tinysound.TinySound;
 public class UpdateRunner implements Runnable {
 		
 		private AtomicBoolean running;
-		private int updateRate;
+		private SourceDataLine outLine;
+		private Mixer mixer;
 		
 		/**
-		 * Constructs a new UpdateRunner to update the TinySound system at the
-		 * specified rate.
-		 * @param updateRate number of times to update the TinySound system
-		 * every second
+		 * Constructs a new UpdateRunner to update the TinySound system.
+		 * @param mixer the mixer to read audio data from
+		 * @param outLine the line to write audio data to
 		 */
-		public UpdateRunner(int updateRate) {
+		public UpdateRunner(Mixer mixer, SourceDataLine outLine) {
 			this.running = new AtomicBoolean();
-			this.updateRate = updateRate;
+			this.mixer = mixer;
+			this.outLine = outLine;
 		}
 		
 		/**
@@ -62,20 +65,50 @@ public class UpdateRunner implements Runnable {
 
 		@Override
 		public void run() {
+			//mark the updater as running
 			this.running.set(true);
-			long nanosPerUpdate = 1000000000L / this.updateRate;
-			long lastUpdate = 0;
+			//2-sec buffer
+			int bufSize = (int)TinySound.FORMAT.getFrameRate() *
+				TinySound.FORMAT.getFrameSize() * 2;
+			byte[] audioBuffer = new byte[bufSize];
+			int numBytesRead = 0;
+			double framesAccrued = 0;
+			long lastUpdate = System.nanoTime();
 			//keep running until told to stop
 			while (this.running.get()) {
+				//check the time
 				long currTime = System.nanoTime();
-				long delta = currTime - lastUpdate;
-				if (delta >= nanosPerUpdate) {
-					TinySound.update();
-					lastUpdate = currTime;
+				//accrue frames
+				double delta = currTime - lastUpdate;
+				double secDelta = (delta / 1000000000L);
+				framesAccrued += secDelta * TinySound.FORMAT.getFrameRate(); 
+				//read frames if needed
+				int framesToRead = (int)framesAccrued;
+				if (framesToRead > 0) {
+					//read from the mixer
+					int bytesToRead = framesToRead *
+						TinySound.FORMAT.getFrameSize();
+					int tmpBytesRead = this.mixer.read(audioBuffer,
+							numBytesRead, bytesToRead);
+					numBytesRead += tmpBytesRead; //mark how many read
+					//fill rest with zeroes
+					int remaining = bytesToRead - tmpBytesRead;
+					for (int i = 0; i < remaining; i++) {
+						audioBuffer[numBytesRead + i] = 0;
+					}
+					numBytesRead += remaining; //mark zeroes read
 				}
+				framesAccrued -= framesToRead; //mark frames read
+				//write to speakers
+				if (numBytesRead > 0) {
+					this.outLine.write(audioBuffer, 0, numBytesRead);
+					numBytesRead = 0;
+				}
+				//mark last update
+				lastUpdate = currTime;
 				//give the CPU back to the OS for a bit
 				try {
-					Thread.sleep(0, 100000);
+					Thread.sleep(1);
 				} catch (InterruptedException e) {}
 			}
 		}

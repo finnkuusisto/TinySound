@@ -71,37 +71,17 @@ public class TinySound {
 	
 	//the system has only one mixer for both music and sounds
 	private static Mixer mixer;
-	//the system has a buffer size based on a specified update rate
-	private static int updateRate;
-	private static byte[] audioBuffer;
-	private static int numBytesRead;
-	private static long lastUpdate;
-	private static boolean isFirstUpdate;
 	//need a line to the speakers
 	private static SourceDataLine outLine;
 	//see if the system has been initialized
 	private static boolean inited = false;
 	//auto-updater for the system
 	private static UpdateRunner autoUpdater;
-	private static double driftFramesAccrued;
 	
 	/**
-	 * Initialize the AudioSystem with the default update rate of 100Hz.  This
-	 * is probably sufficient for most users.
+	 * Initialize the AudioSystem.  This must be called before loading audio.
 	 */
 	public static void init() {
-		//default to 100Hz, auto-update
-		TinySound.init(100);
-	}
-	
-	/**
-	 * Initialize the AudioSystem with a desired update rate.  The AudioSystem
-	 * will attempt to allocate an audio buffer that is appropriate for the
-	 * specified update rate.
-	 * @param updateRate the desired update rate of the AudioSystem, in updates
-	 * per second
-	 */
-	public static void init(int updateRate) {
 		if (TinySound.inited) {
 			return;
 		}
@@ -122,22 +102,11 @@ public class TinySound {
 		    return;
 		}
 		TinySound.outLine.start();
-		//now initialize the other stuff
+		//now initialize the mixer
 		TinySound.mixer = new Mixer();
-		TinySound.updateRate = updateRate;
-		//1/2 second + 1 update
-		int halfSecFrames = (int)(TinySound.FORMAT.getFrameRate() / 2);
-		int updateFrames = (int)(TinySound.FORMAT.getFrameRate() / updateRate);
-		int bufSize = (halfSecFrames * TinySound.FORMAT.getFrameSize()) +
-				(updateFrames * TinySound.FORMAT.getFrameSize());
-		TinySound.audioBuffer = new byte[bufSize];
-		TinySound.numBytesRead = 0;
-		TinySound.isFirstUpdate = true;
-		//buffer 10ms of audio
-		int tenMSFrames = (int)TinySound.FORMAT.getFrameRate() / 100;
-		TinySound.preFillAudioBuffer(tenMSFrames);
 		//initialize and start the updater
-		TinySound.autoUpdater = new UpdateRunner(updateRate);
+		TinySound.autoUpdater = new UpdateRunner(TinySound.mixer,
+				TinySound.outLine);
 		Thread updateThread = new Thread(TinySound.autoUpdater);
 		updateThread.setDaemon(true);
 		TinySound.inited = true;
@@ -160,121 +129,6 @@ public class TinySound {
 		TinySound.mixer.clearMusic();
 		TinySound.mixer.clearSounds();
 		TinySound.mixer = null;
-		TinySound.updateRate = 0;
-		TinySound.lastUpdate = 0;
-		TinySound.isFirstUpdate = true;
-		TinySound.audioBuffer = null;
-		TinySound.numBytesRead = 0;
-		TinySound.driftFramesAccrued = 0.0;
-	}
-	
-	/**
-	 * Get the current TinySound audio update rate.
-	 * @return the current audio update rate
-	 */
-	public static int getUpdateRate() {
-		return TinySound.updateRate;
-	}
-	
-	/**
-	 * Write a buffer of audio data to the speakers and fill the audio buffer
-	 * for the next update.  TinySound users shouldn't concern themselves with
-	 * this method.
-	 */
-	public static void update() {
-		if (!TinySound.inited) {
-			System.err.println("TinySound not initialized!");
-			return;
-		}
-		TinySound.update(true);
-	}
-	
-	/**
-	 * Write a buffer of audio data to the speakers and fill the audio buffer
-	 * for the next update as specified.
-	 * @param fillNextBuffer true if the next audio buffer should be filled
-	 */
-	private static void update(boolean fillNextBuffer) {
-		if (!TinySound.inited) {
-			System.err.println("TinySound not initialized!");
-			return;
-		}
-		//check for first update
-		if (TinySound.isFirstUpdate) {
-			TinySound.lastUpdate = System.nanoTime();
-			TinySound.isFirstUpdate = false;
-		}
-		//drain the buffer if there is any
-		if (TinySound.numBytesRead <= 0) {
-			TinySound.fillAudioBuffer();
-		}
-		if (TinySound.numBytesRead > 0) {
-			//and write to the speakers
-			TinySound.outLine.write(TinySound.audioBuffer, 0,
-					TinySound.numBytesRead);
-			TinySound.numBytesRead = 0;
-		}
-		//now fill the buffer for the next update if desired
-		if (fillNextBuffer) {
-			TinySound.fillAudioBuffer();
-		}
-	}
-	
-	/**
-	 * Fills the audio buffer with audio data.  Also handles drift compensation.
-	 */
-	private static void fillAudioBuffer() {
-		if (!TinySound.inited) {
-			return;
-		}
-		long currTime = System.nanoTime();
-		double secDelta = (currTime - TinySound.lastUpdate) / 1000000000.0;
-		double framesToRead = secDelta * TinySound.FORMAT.getFrameRate();
-		if (framesToRead > 0.0) {
-			//update accrued drift
-			TinySound.driftFramesAccrued += (framesToRead - (int)framesToRead);
-			//check drift and update accrued drift
-			int driftFramesToAdd = (int)TinySound.driftFramesAccrued;
-			TinySound.driftFramesAccrued -= driftFramesToAdd;
-			//calculate bytes to read
-			int bytesToRead = ((int)framesToRead + driftFramesToAdd) *
-				TinySound.FORMAT.getFrameSize();
-			//now read the bytes
-			int tmpBytesRead = TinySound.mixer.read(TinySound.audioBuffer,
-					TinySound.numBytesRead, bytesToRead);
-			TinySound.numBytesRead += tmpBytesRead;
-			//fill remainder with zeroes
-			int remainder = bytesToRead - tmpBytesRead;
-			for (int i = 0; i < remainder; i++) {
-				TinySound.audioBuffer[TinySound.numBytesRead + i] = 0;
-			}
-			TinySound.numBytesRead += remainder;
-			//mark last update
-			TinySound.lastUpdate = currTime;
-		}
-	}
-	
-	/**
-	 * Fills the audio buffer with a specified number of frames of audio data
-	 * without recording the last update time.
-	 */
-	private static void preFillAudioBuffer(int numFrames) {
-		if (!TinySound.inited) {
-			return;
-		}
-		if (numFrames > 0) {
-			int bytesToRead = numFrames * TinySound.FORMAT.getFrameSize();
-			//now read the bytes
-			int tmpBytesRead = TinySound.mixer.read(TinySound.audioBuffer,
-					TinySound.numBytesRead, bytesToRead);
-			TinySound.numBytesRead += tmpBytesRead;
-			//fill remainder with zeroes
-			int remainder = bytesToRead - tmpBytesRead;
-			for (int i = 0; i < remainder; i++) {
-				TinySound.audioBuffer[TinySound.numBytesRead + i] = 0;
-			}
-			TinySound.numBytesRead += remainder;
-		}
 	}
 	
 	/**
