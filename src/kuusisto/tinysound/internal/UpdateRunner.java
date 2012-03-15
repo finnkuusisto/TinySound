@@ -73,9 +73,13 @@ public class UpdateRunner implements Runnable {
 			byte[] audioBuffer = new byte[bufSize];
 			int numBytesRead = 0;
 			double framesAccrued = 0;
-			long lastUpdate = System.nanoTime();
+			long lastUpdate = 0;
 			//keep running until told to stop
 			while (this.running.get()) {
+				//first time
+				if (lastUpdate == 0) {
+					lastUpdate = System.nanoTime();
+				}
 				//check the time
 				long currTime = System.nanoTime();
 				//accrue frames

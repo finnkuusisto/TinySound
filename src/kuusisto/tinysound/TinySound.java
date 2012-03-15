@@ -108,7 +108,10 @@ public class TinySound {
 		TinySound.autoUpdater = new UpdateRunner(TinySound.mixer,
 				TinySound.outLine);
 		Thread updateThread = new Thread(TinySound.autoUpdater);
-		updateThread.setDaemon(true);
+		try {
+			updateThread.setDaemon(true);
+			updateThread.setPriority(Thread.MAX_PRIORITY);
+		} catch (Exception e) {}
 		TinySound.inited = true;
 		updateThread.start();
 	}
@@ -451,6 +454,7 @@ public class TinySound {
 	private static AudioInputStream getValidAudioStream(InputStream stream) {
 		AudioInputStream audioStream = null;
 		try {
+			boolean converted = false;
 			audioStream = AudioSystem.getAudioInputStream(stream);
 			//1-channel can also be treated as stereo
 			AudioFormat mono = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
@@ -470,11 +474,13 @@ public class TinySound {
 					audioStream.getFormat())) {
 				audioStream = AudioSystem.getAudioInputStream(TinySound.FORMAT,
 						audioStream);
+				converted = true;
 			} //check conversion to mono alternate
 			else if (AudioSystem.isConversionSupported(mono,
 					audioStream.getFormat())) {
 				audioStream = AudioSystem.getAudioInputStream(mono,
 						audioStream);
+				converted = true;
 			} //try convert from 8-bit, 2-channel
 			else if (audioStream.getFormat().equals(stereo8) ||
 					AudioSystem.isConversionSupported(stereo8,
@@ -483,8 +489,9 @@ public class TinySound {
 				if (!audioStream.getFormat().equals(stereo8)) {
 					audioStream = AudioSystem.getAudioInputStream(stereo8,
 							audioStream);
+					converted = true;
 				}
-				audioStream = TinySound.getTwoChannel8Bit(audioStream);
+				audioStream = TinySound.convertStereo8Bit(audioStream);
 			} //try convert from 8-bit, 1-channel
 			else if (audioStream.getFormat().equals(mono8) ||
 					AudioSystem.isConversionSupported(mono8,
@@ -493,13 +500,30 @@ public class TinySound {
 				if (!audioStream.getFormat().equals(mono8)) {
 					audioStream = AudioSystem.getAudioInputStream(mono8,
 							audioStream);
+					converted = true;
 				}
-				audioStream = TinySound.getOneChannel8Bit(audioStream);
+				audioStream = TinySound.convertMono8Bit(audioStream);
 			} //it's time to give up
 			else {
 				System.err.println("Unable to convert audio resource!");
 				System.err.println(audioStream.getFormat());
 				audioStream.close();
+				return null;
+			}
+			//check the frame length
+			long frameLength = audioStream.getFrameLength();
+			//too long
+			if (frameLength > Integer.MAX_VALUE) {
+				System.err.println("Audio resource too long!");
+				return null;
+			} //conversion left frame length unspecified
+			else if (frameLength < 0 && converted) {
+				System.err.println("Converted audio resource has unspecified " +
+						"length!");
+				return null;
+			} //non-converted frame length unspecified
+			else if (frameLength < 0) {
+				System.err.println("Audio resource has unspecified length!");
 				return null;
 			}
 		}
@@ -524,7 +548,7 @@ public class TinySound {
 	 * @param stream stream to convert
 	 * @return converted stream
 	 */
-	private static AudioInputStream getOneChannel8Bit(AudioInputStream stream) {
+	private static AudioInputStream convertMono8Bit(AudioInputStream stream) {
 		//assuming 8-bit, 1-channel to 16-bit, 1-channel
 		int numFrames = (int)stream.getFrameLength();
 		int numBytes = numFrames * 2;
@@ -573,7 +597,7 @@ public class TinySound {
 	 * @param stream stream to convert
 	 * @return converted stream
 	 */
-	private static AudioInputStream getTwoChannel8Bit(AudioInputStream stream) {
+	private static AudioInputStream convertStereo8Bit(AudioInputStream stream) {
 		//assuming 8-bit, 2-channel to 16-bit, 2-channel
 		int numFrames = (int)stream.getFrameLength();
 		int numBytes = numFrames * 2 * 2; //2-bytes, 2-channels
