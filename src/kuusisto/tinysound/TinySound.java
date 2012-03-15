@@ -382,6 +382,11 @@ public class TinySound {
 		//read all the bytes (assuming 1-channel)
 		int numBytes = (int)stream.getFrameLength() *
 			stream.getFormat().getFrameSize();
+		//should only be negative if too large
+		if (numBytes < 0) {
+			System.err.println("Audio resource too long!");
+			return null;
+		}
 		byte[] data = new byte[numBytes];
 		try {
 			int numRead = stream.read(data);
@@ -412,6 +417,11 @@ public class TinySound {
 		//read all the bytes (assuming 16-bit, 2-channel)
 		int numBytesPerChannel = (int)stream.getFrameLength() *
 			(stream.getFormat().getFrameSize() / 2);
+		//should only be negative if too large
+		if (numBytesPerChannel < 0) {
+			System.err.println("Audio resource too long!");
+			return null;
+		}
 		byte[] left = new byte[numBytesPerChannel];
 		byte[] right = new byte[numBytesPerChannel];
 		byte[][] data = null;
