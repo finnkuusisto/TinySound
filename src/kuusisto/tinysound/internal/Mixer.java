@@ -126,7 +126,7 @@ public class Mixer {
 				//is the music playing and are there bytes available
 				if (music.getPlaying() && music.bytesAvailable() > 0) {
 					//add this music to the mix by volume
-					music.nextTwoBytes(this.dataBuf, true);
+					music.nextTwoBytes(this.dataBuf, false);
 					double volume = music.getVolume();
 					leftValue += (this.dataBuf[0] * volume);
 					rightValue += (this.dataBuf[1] * volume);
@@ -140,7 +140,7 @@ public class Mixer {
 				//are there bytes available
 				if (sound.bytesAvailable() > 0) {
 					//add this sound to the mix by volume
-					sound.nextTwoBytes(this.dataBuf, true);
+					sound.nextTwoBytes(this.dataBuf, false);
 					double volume = sound.getVolume();
 					leftValue += (this.dataBuf[0] * volume);
 					rightValue += (this.dataBuf[1] * volume);
@@ -173,11 +173,11 @@ public class Mixer {
 					finalRightValue = Short.MIN_VALUE;
 				}
 				//left channel bytes
-				data[i] = (byte)((finalLeftValue >> 8) & 0xFF); //MSB
-				data[i + 1] = (byte)(finalLeftValue & 0xFF); //LSB
+				data[i + 1] = (byte)((finalLeftValue >> 8) & 0xFF); //MSB
+				data[i] = (byte)(finalLeftValue & 0xFF); //LSB
 				//then right channel bytes
-				data[i + 2] = (byte)((finalRightValue >> 8) & 0xFF); //MSB
-				data[i + 3] = (byte)(finalRightValue & 0xFF); //LSB
+				data[i + 3] = (byte)((finalRightValue >> 8) & 0xFF); //MSB
+				data[i + 2] = (byte)(finalRightValue & 0xFF); //LSB
 				numRead += 4;
 			}
 		}

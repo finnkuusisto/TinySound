@@ -66,7 +66,7 @@ public class TinySound {
 			2, //2 channels fool
 			4, //frame size 4 bytes (16-bit, 2 channel)
 			44100, //same as sampling rate
-			true //big-endian
+			false //little-endian
 			);
 	
 	//the system has only one mixer for both music and sounds
@@ -441,13 +441,13 @@ public class TinySound {
 			audioStream = AudioSystem.getAudioInputStream(stream);
 			//1-channel can also be treated as stereo
 			AudioFormat mono = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-					44100, 16, 1, 2, 44100, true);
+					44100, 16, 1, 2, 44100, false);
 			//1 or 2 channel 8-bit may be easy to convert
 			AudioFormat mono8 =	new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-					44100, 8, 1, 1, 44100, true);
+					44100, 8, 1, 1, 44100, false);
 			AudioFormat stereo8 =
 				new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 8, 2, 2,
-					44100, true);
+					44100, false);
 			//now check formats (attempt conversion as needed)
 			if (audioStream.getFormat().equals(TinySound.FORMAT) ||
 					audioStream.getFormat().equals(mono)) {
@@ -543,8 +543,8 @@ public class TinySound {
 				}
 				//convert it to an int and then to 2 bytes
 				int val = (int)(floatVal * Short.MAX_VALUE);
-				newData[j] = (byte)((val >> 8) & 0xFF); //MSB
-				newData[j + 1] = (byte)(val & 0xFF); //LSB
+				newData[j + 1] = (byte)((val >> 8) & 0xFF); //MSB
+				newData[j] = (byte)(val & 0xFF); //LSB
 			}
 		}
 		catch (IOException e) {
@@ -555,7 +555,7 @@ public class TinySound {
 			try { stream.close(); } catch (IOException e) {}
 		}
 		AudioFormat mono16 = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-				44100, 16, 1, 2, 44100, true);
+				44100, 16, 1, 2, 44100, false);
 		return new AudioInputStream(new ByteArrayInputStream(newData), mono16,
 				newData.length / 2);
 	}
@@ -600,11 +600,11 @@ public class TinySound {
 				int leftVal = (int)(leftFloatVal * Short.MAX_VALUE);
 				int rightVal = (int)(rightFloatVal * Short.MAX_VALUE);
 				//left channel bytes
-				newData[j] = (byte)((leftVal >> 8) & 0xFF); //MSB
-				newData[j + 1] = (byte)(leftVal & 0xFF); //LSB
+				newData[j + 1] = (byte)((leftVal >> 8) & 0xFF); //MSB
+				newData[j] = (byte)(leftVal & 0xFF); //LSB
 				//then right channel bytes
-				newData[j + 2] = (byte)((rightVal >> 8) & 0xFF); //MSB
-				newData[j + 3] = (byte)(rightVal & 0xFF); //LSB
+				newData[j + 3] = (byte)((rightVal >> 8) & 0xFF); //MSB
+				newData[j + 2] = (byte)(rightVal & 0xFF); //LSB
 			}
 		}
 		catch (IOException e) {
@@ -615,7 +615,7 @@ public class TinySound {
 			try { stream.close(); } catch (IOException e) {}
 		}
 		AudioFormat stereo16 = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-				44100, 16, 2, 4, 44100, true);
+				44100, 16, 2, 4, 44100, false);
 		return new AudioInputStream(new ByteArrayInputStream(newData), stereo16,
 				newData.length / 4);
 	}
