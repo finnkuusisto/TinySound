@@ -67,19 +67,18 @@ public class UpdateRunner implements Runnable {
 		public void run() {
 			//mark the updater as running
 			this.running.set(true);
-			//2-sec buffer
+			//1-sec buffer
 			int bufSize = (int)TinySound.FORMAT.getFrameRate() *
-				TinySound.FORMAT.getFrameSize() * 2;
+				TinySound.FORMAT.getFrameSize();
 			byte[] audioBuffer = new byte[bufSize];
+			//only buffer some maximum number of frames each update (25ms)
+			int maxFramesPerUpdate = 
+				(int)((TinySound.FORMAT.getFrameRate() / 1000) * 25);
 			int numBytesRead = 0;
 			double framesAccrued = 0;
-			long lastUpdate = 0;
+			long lastUpdate = System.nanoTime();
 			//keep running until told to stop
 			while (this.running.get()) {
-				//first time
-				if (lastUpdate == 0) {
-					lastUpdate = System.nanoTime();
-				}
 				//check the time
 				long currTime = System.nanoTime();
 				//accrue frames
@@ -88,6 +87,19 @@ public class UpdateRunner implements Runnable {
 				framesAccrued += secDelta * TinySound.FORMAT.getFrameRate(); 
 				//read frames if needed
 				int framesToRead = (int)framesAccrued;
+				int framesToSkip = 0;
+				//check if we need to skip frames to catch up
+				if (framesToRead > maxFramesPerUpdate) {
+					framesToSkip = framesToRead - maxFramesPerUpdate;
+					framesToRead = maxFramesPerUpdate;
+				}
+				//skip frames
+				if (framesToSkip > 0) {
+					int bytesToSkip = framesToSkip *
+						TinySound.FORMAT.getFrameSize();
+					this.mixer.skip(bytesToSkip);
+				}
+				//read frames
 				if (framesToRead > 0) {
 					//read from the mixer
 					int bytesToRead = framesToRead *
@@ -102,7 +114,8 @@ public class UpdateRunner implements Runnable {
 					}
 					numBytesRead += remaining; //mark zeroes read
 				}
-				framesAccrued -= framesToRead; //mark frames read
+				//mark frames read and skipped
+				framesAccrued -= (framesToRead + framesToSkip);
 				//write to speakers
 				if (numBytesRead > 0) {
 					this.outLine.write(audioBuffer, 0, numBytesRead);

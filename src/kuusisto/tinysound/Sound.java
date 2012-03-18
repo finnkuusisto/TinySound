@@ -79,6 +79,15 @@ public class Sound {
 	}
 	
 	/**
+	 * Stops this Sound from playing.  Note that if this Sound was played
+	 * repeatedly in an overlapping fashion, all instances of this Sound still
+	 * playing will be stopped.
+	 */
+	public void stop() {
+		this.mixer.unRegisterSoundReference(this.ID);
+	}
+	
+	/**
 	 * Unloads this Sound from the system.  Attempts to use this Sound after
 	 * unloading will result in error.
 	 */

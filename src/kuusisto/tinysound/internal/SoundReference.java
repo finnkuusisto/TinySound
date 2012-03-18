@@ -75,6 +75,14 @@ public class SoundReference {
 	}
 	
 	/**
+	 * Skip a specified number of bytes of the audio data.
+	 * @param num number of bytes to skip
+	 */
+	public synchronized void skipBytes(int num) {
+		this.position += num;
+	}
+	
+	/**
 	 * Get the next byte from the sound data.
 	 * @param data length-2 array to write in next byte from each channel
 	 */

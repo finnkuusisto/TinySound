@@ -33,7 +33,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -43,6 +42,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import kuusisto.tinysound.internal.ByteList;
 import kuusisto.tinysound.internal.Mixer;
 import kuusisto.tinysound.internal.UpdateRunner;
 
@@ -114,6 +114,8 @@ public class TinySound {
 		} catch (Exception e) {}
 		TinySound.inited = true;
 		updateThread.start();
+		//yield to potentially give the updater a chance
+		Thread.yield();
 	}
 	
 	/**
@@ -380,23 +382,9 @@ public class TinySound {
 	 */
 	private static byte[] readAllBytesOneChannel(AudioInputStream stream) {
 		//read all the bytes (assuming 1-channel)
-		int numBytes = (int)stream.getFrameLength() *
-			stream.getFormat().getFrameSize();
-		//should only be negative if too large
-		if (numBytes < 0) {
-			System.err.println("Audio resource too long!");
-			return null;
-		}
-		byte[] data = new byte[numBytes];
+		byte[] data = null;
 		try {
-			int numRead = stream.read(data);
-			if (numRead != numBytes) {
-				//didn't read all of the data for some reason
-				System.err.println("Failed to read all data from stream!\n" +
-						numRead + " of " + numBytes + " read");
-				//return what we did read I guess
-				data = Arrays.copyOf(data, numRead);
-			}
+			data = TinySound.getBytes(stream);
 		}
 		catch (IOException e) {
 			System.err.println("Error reading all bytes from stream!");
@@ -415,31 +403,17 @@ public class TinySound {
 	 */
 	private static byte[][] readAllBytesTwoChannel(AudioInputStream stream) {
 		//read all the bytes (assuming 16-bit, 2-channel)
-		int numBytesPerChannel = (int)stream.getFrameLength() *
-			(stream.getFormat().getFrameSize() / 2);
-		//should only be negative if too large
-		if (numBytesPerChannel < 0) {
-			System.err.println("Audio resource too long!");
-			return null;
-		}
-		byte[] left = new byte[numBytesPerChannel];
-		byte[] right = new byte[numBytesPerChannel];
 		byte[][] data = null;
 		try {
-			//read one frame at a time
-			byte[] frame = new byte[stream.getFormat().getFrameSize()];
-			for (int i = 0; i < numBytesPerChannel; i += 2) {
-				int bytesRead = stream.read(frame);
-				//hope it actually reads a full frame (it should)
-				if (bytesRead != stream.getFormat().getFrameSize()) {
-					System.err.println("Failed to read full frame of data " +
-							"from stream!");
-				}
+			byte[] allBytes = TinySound.getBytes(stream);
+			byte[] left = new byte[allBytes.length / 2];
+			byte[] right = new byte[allBytes.length / 2];
+			for (int i = 0, j = 0; i < allBytes.length; i += 4, j += 2) {
 				//interleaved left then right
-				left[i] = frame[0];
-				left[i + 1] = frame[1];
-				right[i] = frame[2];
-				right[i + 1] = frame[3];
+				left[j] = allBytes[i];
+				left[j + 1] = allBytes[i + 1];
+				right[j] = allBytes[i + 2];
+				right[j + 1] = allBytes[i + 3];
 			}
 			data = new byte[2][];
 			data[0] = left;
@@ -464,7 +438,6 @@ public class TinySound {
 	private static AudioInputStream getValidAudioStream(InputStream stream) {
 		AudioInputStream audioStream = null;
 		try {
-			boolean converted = false;
 			audioStream = AudioSystem.getAudioInputStream(stream);
 			//1-channel can also be treated as stereo
 			AudioFormat mono = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
@@ -484,13 +457,11 @@ public class TinySound {
 					audioStream.getFormat())) {
 				audioStream = AudioSystem.getAudioInputStream(TinySound.FORMAT,
 						audioStream);
-				converted = true;
 			} //check conversion to mono alternate
 			else if (AudioSystem.isConversionSupported(mono,
 					audioStream.getFormat())) {
 				audioStream = AudioSystem.getAudioInputStream(mono,
 						audioStream);
-				converted = true;
 			} //try convert from 8-bit, 2-channel
 			else if (audioStream.getFormat().equals(stereo8) ||
 					AudioSystem.isConversionSupported(stereo8,
@@ -499,7 +470,6 @@ public class TinySound {
 				if (!audioStream.getFormat().equals(stereo8)) {
 					audioStream = AudioSystem.getAudioInputStream(stereo8,
 							audioStream);
-					converted = true;
 				}
 				audioStream = TinySound.convertStereo8Bit(audioStream);
 			} //try convert from 8-bit, 1-channel
@@ -510,7 +480,6 @@ public class TinySound {
 				if (!audioStream.getFormat().equals(mono8)) {
 					audioStream = AudioSystem.getAudioInputStream(mono8,
 							audioStream);
-					converted = true;
 				}
 				audioStream = TinySound.convertMono8Bit(audioStream);
 			} //it's time to give up
@@ -525,15 +494,6 @@ public class TinySound {
 			//too long
 			if (frameLength > Integer.MAX_VALUE) {
 				System.err.println("Audio resource too long!");
-				return null;
-			} //conversion left frame length unspecified
-			else if (frameLength < 0 && converted) {
-				System.err.println("Converted audio resource has unspecified " +
-						"length!");
-				return null;
-			} //non-converted frame length unspecified
-			else if (frameLength < 0) {
-				System.err.println("Audio resource has unspecified length!");
 				return null;
 			}
 		}
@@ -560,21 +520,20 @@ public class TinySound {
 	 */
 	private static AudioInputStream convertMono8Bit(AudioInputStream stream) {
 		//assuming 8-bit, 1-channel to 16-bit, 1-channel
-		int numFrames = (int)stream.getFrameLength();
-		int numBytes = numFrames * 2;
-		byte[] data = new byte[numBytes];
+		byte[] newData = null;
 		try {
-			//read bytes one-by-one, convert to int, and then to 16-bit
-			byte[] buf = new byte[1];
-			for (int i = 0; i < numBytes; i += 2) {
-				//read a byte
-				int numRead = stream.read(buf);
-				if (numRead <= 0) {
-					System.err.println("Failed to read full frame of data " +
-					"from stream!");
-				}
-				//convert it to an double
-				double floatVal = (double)buf[0];
+			byte[] data = TinySound.getBytes(stream);
+			int newNumBytes = data.length * 2;
+			//check if size overflowed
+			if (newNumBytes < 0) {
+				System.err.println("Audio resource too long!");
+				return null;
+			}
+			newData = new byte[newNumBytes];
+			//convert bytes one-by-one to int, and then to 16-bit
+			for (int i = 0, j = 0; i < data.length; i++, j += 2) {
+				//convert it to a double
+				double floatVal = (double)data[i];
 				floatVal /= (floatVal < 0) ? 128 : 127;
 				if (floatVal < -1.0) { //just in case
 					floatVal = -1.0;
@@ -584,8 +543,8 @@ public class TinySound {
 				}
 				//convert it to an int and then to 2 bytes
 				int val = (int)(floatVal * Short.MAX_VALUE);
-				data[i] = (byte)((val >> 8) & 0xFF); //MSB
-				data[i + 1] = (byte)(val & 0xFF); //LSB
+				newData[j] = (byte)((val >> 8) & 0xFF); //MSB
+				newData[j + 1] = (byte)(val & 0xFF); //LSB
 			}
 		}
 		catch (IOException e) {
@@ -597,8 +556,8 @@ public class TinySound {
 		}
 		AudioFormat mono16 = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
 				44100, 16, 1, 2, 44100, true);
-		return new AudioInputStream(new ByteArrayInputStream(data), mono16,
-				numFrames);
+		return new AudioInputStream(new ByteArrayInputStream(newData), mono16,
+				newData.length / 2);
 	}
 	
 	/**
@@ -609,22 +568,20 @@ public class TinySound {
 	 */
 	private static AudioInputStream convertStereo8Bit(AudioInputStream stream) {
 		//assuming 8-bit, 2-channel to 16-bit, 2-channel
-		int numFrames = (int)stream.getFrameLength();
-		int numBytes = numFrames * 2 * 2; //2-bytes, 2-channels
-		byte[] data = new byte[numBytes];
+		byte[] newData = null;
 		try {
-			//read frames one-by-one, convert to ints, and then to 16-bit
-			byte[] buf = new byte[2];
-			for (int i = 0; i < numBytes; i += 4) {
-				//read a frame
-				int numRead = stream.read(buf);
-				if (numRead <= 1) {
-					System.err.println("Failed to read full frame of data " +
-					"from stream!");
-				}
+			byte[] data = TinySound.getBytes(stream);
+			int newNumBytes = data.length * 2 * 2;
+			//check if size overflowed
+			if (newNumBytes < 0) {
+				System.err.println("Audio resource too long!");
+				return null;
+			}
+			newData = new byte[newNumBytes];
+			for (int i = 0, j = 0; i < data.length; i += 2, j += 4) {
 				//convert them to doubles
-				double leftFloatVal = (double)buf[0];
-				double rightFloatVal = (double)buf[1];
+				double leftFloatVal = (double)data[i];
+				double rightFloatVal = (double)data[i + 1];
 				leftFloatVal /= (leftFloatVal < 0) ? 128 : 127;
 				rightFloatVal /= (rightFloatVal < 0) ? 128 : 127;
 				if (leftFloatVal < -1.0) { //just in case
@@ -643,11 +600,11 @@ public class TinySound {
 				int leftVal = (int)(leftFloatVal * Short.MAX_VALUE);
 				int rightVal = (int)(rightFloatVal * Short.MAX_VALUE);
 				//left channel bytes
-				data[i] = (byte)((leftVal >> 8) & 0xFF); //MSB
-				data[i + 1] = (byte)(leftVal & 0xFF); //LSB
+				newData[j] = (byte)((leftVal >> 8) & 0xFF); //MSB
+				newData[j + 1] = (byte)(leftVal & 0xFF); //LSB
 				//then right channel bytes
-				data[i + 2] = (byte)((rightVal >> 8) & 0xFF); //MSB
-				data[i + 3] = (byte)(rightVal & 0xFF); //LSB
+				newData[j + 2] = (byte)((rightVal >> 8) & 0xFF); //MSB
+				newData[j + 3] = (byte)(rightVal & 0xFF); //LSB
 			}
 		}
 		catch (IOException e) {
@@ -659,8 +616,30 @@ public class TinySound {
 		}
 		AudioFormat stereo16 = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
 				44100, 16, 2, 4, 44100, true);
-		return new AudioInputStream(new ByteArrayInputStream(data), stereo16,
-				numFrames);
+		return new AudioInputStream(new ByteArrayInputStream(newData), stereo16,
+				newData.length / 4);
+	}
+	
+	/**
+	 * Read all of the bytes from an AudioInputStream.
+	 * @param stream the stream from which to read bytes
+	 * @return all bytes read from the AudioInputStream
+	 * @throws IOException 
+	 */
+	private static byte[] getBytes(AudioInputStream stream)
+			throws IOException {
+		//buffer 1-sec at a time
+		int bufSize = (int)TinySound.FORMAT.getSampleRate() *
+			TinySound.FORMAT.getChannels() * TinySound.FORMAT.getFrameSize();
+		byte[] buf = new byte[bufSize];
+		ByteList list = new ByteList(bufSize);
+		int numRead = 0;
+		while ((numRead = stream.read(buf)) > -1)  {
+			for (int i = 0; i < numRead; i++) {
+				list.add(buf[i]);
+			}
+		}
+		return list.asArray();
 	}
 	
 }

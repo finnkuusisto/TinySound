@@ -156,6 +156,20 @@ public class MusicReference {
 	}
 	
 	/**
+	 * Skip a specified number of bytes of the audio data.
+	 * @param num number of bytes to skip
+	 */
+	public synchronized void skipBytes(int num) {
+		for (int i = 0; i < num; i++) {
+			this.position++;
+			//wrap if looping
+			if (this.loop && this.position >= this.left.length) {
+				this.position = this.loopPosition;
+			}
+		}
+	}
+	
+	/**
 	 * Get the next byte from the music data.
 	 * @param data length-2 array to write in next byte from each channel
 	 */

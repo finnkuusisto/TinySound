@@ -183,5 +183,37 @@ public class Mixer {
 		}
 		return numRead;
 	}
+	
+	/**
+	 * Skip specified number of bytes of all audio in this Mixer.
+	 * @param numBytes the number of bytes to skip
+	 */
+	public synchronized void skip(int numBytes) {
+		//go through all the music first
+		for (int m = 0; m < this.musics.size(); m++) {
+			MusicReference music = this.musics.get(m);
+			//is the music playing and are there bytes available
+			if (music.getPlaying() && music.bytesAvailable() > 0) {
+				//skip the bytes
+				music.skipBytes(numBytes);
+			}
+		}
+		//then go through all the sounds (backwards to remove completed)
+		for (int s = this.sounds.size() - 1; s >= 0; s--) {
+			SoundReference sound = this.sounds.get(s);
+			//are there bytes available
+			if (sound.bytesAvailable() > 0) {
+				//skip the bytes
+				sound.skipBytes(numBytes);
+				//remove the reference if done
+				if (sound.bytesAvailable() <= 0) {
+					this.sounds.remove(s);
+				}
+			}
+			else { //otherwise remove this reference
+				this.sounds.remove(s);
+			}
+		}
+	}
 
 }
