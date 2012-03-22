@@ -24,6 +24,7 @@ vorbisspi jar files on your CLASSPATH along with TinySound.
 
 Javadocs
 --------
+You should only be concerned with the classes in the kuusisto.tinysound package.
 http://finnkuusisto.github.com/TinySound
 
 Using TinySound
