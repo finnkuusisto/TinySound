@@ -22,6 +22,10 @@ inclusion of the libraries found in the lib directory.  If you intend to use Ogg
 Vorbis files with TinySound just include the jorbis, tritonus_share and
 vorbisspi jar files on your CLASSPATH along with TinySound.
 
+Javadocs
+--------
+http://finnkuusisto.github.com/TinySound
+
 Using TinySound
 ---------------
 There are 3 classes that you need to know when using TinySound: TinySound, Music
