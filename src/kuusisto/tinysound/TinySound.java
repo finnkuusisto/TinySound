@@ -28,10 +28,8 @@ package kuusisto.tinysound;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.sound.sampled.AudioFormat;
@@ -156,13 +154,13 @@ public class TinySound {
 		if (!name.startsWith("/")) {
 			name = "/" + name;
 		}
-		InputStream stream = TinySound.class.getResourceAsStream(name);
+		URL url = TinySound.class.getResource(name);
 		//check for failure to find resource
-		if (stream == null) {
+		if (url == null) {
 			System.err.println("Unable to find resource " + name + "!");
 			return null;
 		}
-		return TinySound.loadMusic(stream);
+		return TinySound.loadMusic(url);
 	}
 	
 	/**
@@ -180,14 +178,14 @@ public class TinySound {
 		if (file == null) {
 			return null;
 		}
-		InputStream stream = null;
+		URL url = null;
 		try {
-			stream = new FileInputStream(file);
-		} catch (FileNotFoundException e) {
-			System.err.println("Unable to open file " + file + "!");
+			url = file.toURI().toURL();
+		} catch (MalformedURLException e) {
+			System.err.println("Unable to find file " + file + "!");
 			return null;
 		}
-		return TinySound.loadMusic(stream);
+		return TinySound.loadMusic(url);
 	}
 	
 	/**
@@ -205,32 +203,7 @@ public class TinySound {
 		if (url == null) {
 			return null;
 		}
-		InputStream stream = null;
-		try {
-			stream = url.openStream();
-		} catch (IOException e) {
-			System.err.println("Unable to open URL " + url + "!");
-			return null;
-		}
-		return TinySound.loadMusic(stream);
-	}
-	
-	/**
-	 * Load a Music by an InputStream
-	 * @param stream stream of the Music
-	 * @return Music from the stream as specified, null if not found/loaded
-	 */
-	public static Music loadMusic(InputStream stream) {
-		//check if the system is initialized
-		if (!TinySound.inited) {
-			System.err.println("TinySound not initialized!");
-			return null;
-		}
-		//check for failure
-		if (stream == null) {
-			return null;
-		}
-		AudioInputStream audioStream = TinySound.getValidAudioStream(stream);
+		AudioInputStream audioStream = TinySound.getValidAudioStream(url);
 		//check for failure
 		if (audioStream == null) {
 			return null;
@@ -265,13 +238,13 @@ public class TinySound {
 		if (!name.startsWith("/")) {
 			name = "/" + name;
 		}
-		InputStream stream = TinySound.class.getResourceAsStream(name);
+		URL url = TinySound.class.getResource(name);
 		//check for failure to find resource
-		if (stream == null) {
+		if (url == null) {
 			System.err.println("Unable to find resource " + name + "!");
 			return null;
 		}
-		return TinySound.loadSound(stream);
+		return TinySound.loadSound(url);
 
 	}
 	
@@ -290,14 +263,14 @@ public class TinySound {
 		if (file == null) {
 			return null;
 		}
-		InputStream stream = null;
+		URL url = null;
 		try {
-			stream = new FileInputStream(file);
-		} catch (FileNotFoundException e) {
-			System.err.println("Unable to open file " + file + "!");
+			url = file.toURI().toURL();
+		} catch (MalformedURLException e) {
+			System.err.println("Unable to find file " + file + "!");
 			return null;
 		}
-		return TinySound.loadSound(stream);
+		return TinySound.loadSound(url);
 	}
 	
 	/**
@@ -315,33 +288,7 @@ public class TinySound {
 		if (url == null) {
 			return null;
 		}
-		InputStream stream = null;
-		try {
-			stream = url.openStream();
-		} catch (IOException e) {
-			System.err.println("Unable to open URL " + url + "!");
-			return null;
-		}
-		return TinySound.loadSound(stream);
-	}
-	
-	/**
-	 * Load a Sound by an InputStream.
-	 * @param stream stream of the Sound
-	 * @return Sound from stream as specified, null if not found/loaded
-	 */
-	public static Sound loadSound(InputStream stream) {
-		//check if the system is initialized
-		if (!TinySound.inited) {
-			System.err.println("TinySound not initialized!");
-			return null;
-		}
-		//check for failure
-		if (stream == null) {
-			return null;
-		}
-		AudioInputStream audioStream =
-			TinySound.getValidAudioStream(stream);
+		AudioInputStream audioStream = TinySound.getValidAudioStream(url);
 		//check for failure
 		if (audioStream == null) {
 			return null;
@@ -441,14 +388,15 @@ public class TinySound {
 	
 	/**
 	 * Gets and AudioInputStream in the TinySound system format.
-	 * @param stream InputStream of the resource
+	 * @param url URL of the resource
 	 * @return the specified stream as an AudioInputStream stream, null if
 	 * failure
 	 */
-	private static AudioInputStream getValidAudioStream(InputStream stream) {
+	private static AudioInputStream getValidAudioStream(URL url) {
+		System.out.println(url);
 		AudioInputStream audioStream = null;
 		try {
-			audioStream = AudioSystem.getAudioInputStream(stream);
+			audioStream = AudioSystem.getAudioInputStream(url);
 			//1-channel can also be treated as stereo
 			AudioFormat mono = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
 					44100, 16, 1, 2, 44100, false);
@@ -510,13 +458,11 @@ public class TinySound {
 		catch (UnsupportedAudioFileException e) {
 			System.err.println("Unsupported audio resource!\n" +
 					e.getMessage());
-			try { stream.close(); } catch (IOException e1) {}
 			return null;
 		}
 		catch (IOException e) {
 			System.err.println("Error getting resource stream!\n" +
 					e.getMessage());
-			try { stream.close(); } catch (IOException e1) {}
 			return null;
 		}
 		return audioStream;
