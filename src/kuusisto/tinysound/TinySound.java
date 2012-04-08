@@ -157,6 +157,11 @@ public class TinySound {
 			name = "/" + name;
 		}
 		InputStream stream = TinySound.class.getResourceAsStream(name);
+		//check for failure to find resource
+		if (stream == null) {
+			System.err.println("Unable to find resource " + name + "!");
+			return null;
+		}
 		return TinySound.loadMusic(stream);
 	}
 	
@@ -261,6 +266,11 @@ public class TinySound {
 			name = "/" + name;
 		}
 		InputStream stream = TinySound.class.getResourceAsStream(name);
+		//check for failure to find resource
+		if (stream == null) {
+			System.err.println("Unable to find resource " + name + "!");
+			return null;
+		}
 		return TinySound.loadSound(stream);
 
 	}
