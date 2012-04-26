@@ -49,8 +49,7 @@ update thread and clears resources in use.
 You load Music objects via the TinySound loadMusic() functions.  Music objects
 can be started, stopped, paused, resumed, and looped from specified positions.
 If you are done using a particular Music object, you can also unload its sound
-data from the system via its unload() function.  See the Javadocs for more
-detail.
+data from the system via its unload() method.  See the Javadocs for more detail.
 
 -Sound-
 You load Sound objects via the TinySound loadSound() functions.  Sound objects
