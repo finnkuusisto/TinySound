@@ -109,9 +109,9 @@ public class Mixer {
 	 * @return number of bytes read into buffer
 	 */
 	public synchronized int read(byte[] data, int offset, int length) {
-		//*********************************************//
-		//assume big-endian, stereo, 16-bit, signed PCM//
-		//*********************************************//
+		//************************************************//
+		//assume little-endian, stereo, 16-bit, signed PCM//
+		//************************************************//
 		int numRead = 0;
 		boolean bytesRead = true; //terminate early if out of bytes
 		for (int i = offset; i < (length + offset) && bytesRead; i += 4) {

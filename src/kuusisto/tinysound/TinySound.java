@@ -77,7 +77,7 @@ public class TinySound {
 	private static UpdateRunner autoUpdater;
 	
 	/**
-	 * Initialize the AudioSystem.  This must be called before loading audio.
+	 * Initialize Tinysound.  This must be called before loading audio.
 	 */
 	public static void init() {
 		if (TinySound.inited) {
@@ -90,15 +90,49 @@ public class TinySound {
 		    System.err.println("Unsupported output format!");
 		    return;
 		}
-		try {
-		    TinySound.outLine = (SourceDataLine)AudioSystem.getLine(info);
-		    TinySound.outLine.open(TinySound.FORMAT);
-		}
-		catch (LineUnavailableException e) {
+		TinySound.outLine = TinySound.tryGetLine();
+		if (TinySound.outLine == null) {
 		    System.err.println("Output line unavailable!");
 		    return;
 		}
+		//start the line and finish initialization
 		TinySound.outLine.start();
+		TinySound.finishInit();
+	}
+	
+	/**
+	 * Alternative function to initialize TinySound which should only be used by
+	 * those very familiar with the Java Sound API.  This function allows the
+	 * line that is used for audio playback to be opened on a specific Mixer.
+	 * @param info the Mixer.Info representing the desired Mixer
+	 * @throws LineUnavailableException if a Line is not available from the
+	 * specified Mixer
+	 * @throws SecurityException if the specified Mixer or Line are unavailable
+	 * due to security restrictions
+	 * @throws IllegalArgumentException if the specified Mixer is not installed
+	 * on the system
+	 */
+	public static void init(javax.sound.sampled.Mixer.Info info) 
+			throws LineUnavailableException, SecurityException,
+			IllegalArgumentException {
+		if (TinySound.inited) {
+			return;
+		}
+		//try to open a line to the speakers
+		javax.sound.sampled.Mixer mixer = AudioSystem.getMixer(info);
+		DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class,
+				TinySound.FORMAT);
+		TinySound.outLine = (SourceDataLine)mixer.getLine(lineInfo);
+		TinySound.outLine.open(TinySound.FORMAT);
+		//start the line and finish initialization
+		TinySound.outLine.start();
+		TinySound.finishInit();
+	}
+	
+	/**
+	 * Initializes the mixer and updater, and marks TinySound as initialized.
+	 */
+	private static void finishInit() {
 		//now initialize the mixer
 		TinySound.mixer = new Mixer();
 		//initialize and start the updater
@@ -116,7 +150,7 @@ public class TinySound {
 	}
 	
 	/**
-	 * Shutdown the AudioSystem.
+	 * Shutdown TinySound.
 	 */
 	public static void shutdown() {
 		if (!TinySound.inited) {
@@ -131,6 +165,15 @@ public class TinySound {
 		TinySound.mixer.clearMusic();
 		TinySound.mixer.clearSounds();
 		TinySound.mixer = null;
+	}
+	
+	/**
+	 * Determine if TinySound is initialized and ready for use.
+	 * @return true if TinySound is initialized, false if TinySound has not been
+	 * initialized or has subsequently been shutdown
+	 */
+	public static boolean isInitialized() {
+		return TinySound.inited;
 	}
 	
 	/**
@@ -593,6 +636,59 @@ public class TinySound {
 			}
 		}
 		return list.asArray();
+	}
+	
+	/**
+	 * Iterates through available JavaSound Mixers looking for one that can
+	 * provide a line to the speakers.
+	 * @return an opened SourceDataLine to the speakers
+	 */
+	private static SourceDataLine tryGetLine() {
+		//first build our line info and get all available mixers
+		DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class,
+				TinySound.FORMAT);
+		javax.sound.sampled.Mixer.Info[] mixerInfos =
+			AudioSystem.getMixerInfo();
+		//iterate through the mixers trying to find a line
+		for (int i = 0; i < mixerInfos.length; i++) {
+			javax.sound.sampled.Mixer mixer = null;
+			try {
+				//first try to actually get the mixer
+				mixer = AudioSystem.getMixer(mixerInfos[i]);
+			}
+			catch (SecurityException e) {
+				//not much we can do here
+			}
+			catch (IllegalArgumentException e) {
+				//this should never happen since we were told the mixer exists
+			}
+			//check if we got a mixer and our line is supported
+			if (mixer == null || !mixer.isLineSupported(lineInfo)) {
+				continue;
+			}
+			//see if we can actually get a line
+			SourceDataLine line = null;
+			try {
+				line = (SourceDataLine)mixer.getLine(lineInfo);
+				//don't try to open if already open
+				if (!line.isOpen()) {
+					line.open(TinySound.FORMAT);
+				}
+			}
+			catch (LineUnavailableException e) {
+				//we either failed to get or open
+				//should we do anything here?
+			}
+			catch (SecurityException e) {
+				//not much we can do here
+			}
+			//check if we succeeded
+			if (line != null && line.isOpen()) {			
+				return line;
+			}
+		}
+		//no good
+		return null;
 	}
 	
 }

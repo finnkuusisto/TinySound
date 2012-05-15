@@ -40,7 +40,10 @@ There are really only 2 steps you need to worry about with the TinySound class.
 
 1. Initialization is accomplished via the init() function.  It takes no
 arguments and sets up the system for you to play audio data.  TinySound creates
-a daemon thread to automatically write audio data to the speakers.
+a daemon thread to automatically write audio data to the speakers.  For those
+with special requirements and who are very familiar with the Java sound
+libraries, there is an alternative init() function which allows selection of how
+a line is opened to the speakers.  See the Javadocs for more detail.
 
 2. Shutdown is accomplished via the shutdown() function.  This shuts down the
 update thread and clears resources in use.
@@ -56,7 +59,7 @@ You load Sound objects via the TinySound loadSound() functions.  Sound objects
 work differently from Music objects as you can only play them (no pausing etc.).
 When a Sound is played it is queued to be played from the speakers once.  Of
 course, you can play a Sound multiple times in an overlapping fashion so it is
-generally useful for sound effects.
+generally useful for sound effects.  See the Javadocs for more detail.
 
 Example
 -------
