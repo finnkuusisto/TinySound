@@ -33,90 +33,43 @@ package kuusisto.tinysound.internal;
  * 
  * @author Finn Kuusisto
  */
-public class SoundReference {
+public interface SoundReference {
 
-	public final int SOUND_ID; //parent Sound
-	
-	private byte[] left;
-	private byte[] right;
-	private int position;
-	private double volume;
-	
 	/**
-	 * Construct a new SoundReference with the given reference data.
-	 * @param left left channel of sound data
-	 * @param right right channel of sound data
-	 * @param volume volume at which to play the sound
-	 * @param soundID ID of the Sound for which this is a reference
+	 * Get the ID of the Sound that produced this SoundReference.
+	 * @return the ID of this SoundReference's parent Sound
 	 */
-	public SoundReference(byte[] left, byte[] right, double volume,
-			int soundID) {
-		this.left = left;
-		this.right = right;
-		this.volume = (volume >= 0.0) ? volume : 1.0;
-		this.position = 0;
-		this.SOUND_ID = soundID;
-	}
+	public int getSoundID();
 	
 	/**
 	 * Gets the volume of this SoundReference.
 	 * @return volume of this SoundReference
 	 */
-	public double getVolume() {
-		return this.volume;
-	}
+	public double getVolume();
 	
 	/**
-	 * Get the number of bytes remaining for reading.
-	 * @return number of bytes remaining
+	 * Get the number of bytes remaining for each channel.
+	 * @return number of bytes remaining for each channel
 	 */
-	public int bytesAvailable() {
-		return this.left.length - this.position;
-	}
+	public long bytesAvailable();
 	
 	/**
 	 * Skip a specified number of bytes of the audio data.
 	 * @param num number of bytes to skip
 	 */
-	public synchronized void skipBytes(int num) {
-		this.position += num;
-	}
-	
-	/**
-	 * Get the next byte from the sound data.
-	 * @param data length-2 array to write in next byte from each channel
-	 */
-	public void nextByte(byte[] data) {
-		//left channel
-		data[0] = this.left[position];
-		//right channel
-		data[1] = this.right[position];
-		this.position++;
-	}
+	public void skipBytes(long num);
 	
 	/**
 	 * Get the next two bytes from the sound data in the specified endianness.
 	 * @param data length-2 array to write in next two bytes from each channel
 	 * @param bigEndian true if the bytes should be read big-endian
 	 */
-	public void nextTwoBytes(int[] data, boolean bigEndian) {
-		if (bigEndian) {
-			//left
-			data[0] = ((this.left[this.position] << 8) |
-					(this.left[this.position + 1] & 0xFF));
-			//right
-			data[1] = ((this.right[this.position] << 8) |
-					(this.right[this.position + 1] & 0xFF));
-		}
-		else {
-			//left
-			data[0] = ((this.left[this.position + 1] << 8) |
-					(this.left[this.position] & 0xFF));
-			//right
-			data[1] = ((this.right[this.position + 1] << 8) |
-					(this.right[this.position] & 0xFF));
-		}
-		this.position += 2;
-	}
-
+	public void nextTwoBytes(int[] data, boolean bigEndian);
+	
+	/**
+	 * Does any cleanup necessary to dispose of resources in use by this
+	 * SoundReference.
+	 */
+	public void dispose();
+	
 }

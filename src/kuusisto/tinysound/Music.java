@@ -25,187 +25,112 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package kuusisto.tinysound;
-import kuusisto.tinysound.internal.Mixer;
-import kuusisto.tinysound.internal.MusicReference;
 
 /**
- * The Music class is an abstraction for music.  Music objects should only be
- * loaded via the TinySound <code>loadMusic()</code> functions.  Music can be
+ * The Music interface is an abstraction for music.  Music objects should only
+ * be loaded via the TinySound <code>loadMusic()</code> functions.  Music can be
  * played, paused, resumed, stopped and looped from specified positions.
  * 
  * @author Finn Kuusisto
  */
-public class Music {
-	
-	private byte[] left;
-	private byte[] right;
-	private Mixer mixer;
-	private MusicReference reference;
-	
-	/**
-	 * Construct a new Music with the given music data and the Mixer with which
-	 * to register this Music.
-	 * @param left left channel of music data
-	 * @param right right channel of music data
-	 * @param mixer Mixer with which this Music is registered
-	 */
-	public Music(byte[] left, byte[] right, Mixer mixer) {
-		this.left = left;
-		this.right = right;
-		this.mixer = mixer;
-		this.reference = new MusicReference(this.left, this.right, false, false,
-				0, 0, 1.0);
-		this.mixer.registerMusicReference(this.reference);
-	}
-	
+public interface Music {
+
 	/**
 	 * Play this Music and loop if specified.
 	 * @param loop if this Music should loop
 	 */
-	public void play(boolean loop) {
-		this.reference.setPlaying(true);
-		this.reference.setLoop(loop);
-	}
+	public void play(boolean loop);
 	
 	/**
 	 * Play this Music at the specified volume and loop if specified.
 	 * @param loop if this Music should loop
 	 * @param volume the volume to play the this Music
 	 */
-	public void play(boolean loop, double volume) {
-		this.reference.setPlaying(true);
-		this.setLoop(loop);
-		this.setVolume(volume);
-	}
+	public void play(boolean loop, double volume);
 	
 	/**
 	 * Stop playing this Music and set its position to the beginning.
 	 */
-	public void stop() {
-		this.reference.setPlaying(false);
-		this.rewind();
-	}
+	public void stop();
 	
 	/**
 	 * Stop playing this Music and keep its current position.
 	 */
-	public void pause() {
-		this.reference.setPlaying(false);
-	}
+	public void pause();
 	
 	/**
 	 * Play this Music from its current position.
 	 */
-	public void resume() {
-		this.reference.setPlaying(true);
-	}
+	public void resume();
 	
 	/**
 	 * Set this Music's position to the beginning.
 	 */
-	public void rewind() {
-		this.reference.setPosition(0);
-	}
+	public void rewind();
 	
 	/**
 	 * Set this Music's position to the loop position.
 	 */
-	public void rewindToLoopPosition() {
-		int byteIndex = this.reference.getLoopPosition();
-		this.reference.setPosition(byteIndex);
-	}
+	public void rewindToLoopPosition();
 	
 	/**
 	 * Determine if this Music is playing.
 	 * @return true if this Music is playing
 	 */
-	public boolean playing() {
-		return this.reference.getPlaying();
-	}
+	public boolean playing();
 	
 	/**
 	 * Determine if this Music will loop.
 	 * @return true if this Music will loop
 	 */
-	public boolean loop() {
-		return this.reference.getLoop();
-	}
+	public boolean loop();
 	
 	/**
 	 * Set whether this Music will loop.
 	 * @param loop whether this Music will loop
 	 */
-	public void setLoop(boolean loop) {
-		this.reference.setLoop(loop);
-	}
+	public void setLoop(boolean loop);
 	
 	/**
 	 * Get the loop position of this Music by sample frame.
 	 * @return loop position by sample frame
 	 */
-	public int getLoopPositionByFrame() {
-		int byteIndex = this.reference.getLoopPosition();
-		return (byteIndex / TinySound.FORMAT.getFrameSize());
-	}
+	public int getLoopPositionByFrame();
 	
 	/**
 	 * Get the loop position of this Music by seconds.
 	 * @return loop position by seconds
 	 */
-	public double getLoopPositionBySeconds() {
-		int byteIndex = this.reference.getLoopPosition();
-		return (int)(byteIndex / (TinySound.FORMAT.getFrameRate() *
-				TinySound.FORMAT.getFrameSize()));
-	}
+	public double getLoopPositionBySeconds();
 	
 	/**
 	 * Set the loop position of this Music by sample frame.
 	 * @param frameIndex sample frame loop position to set
 	 */
-	public void setLoopPositionByFrame(int frameIndex) {
-		int byteIndex = frameIndex * TinySound.FORMAT.getFrameSize();
-		this.reference.setLoopPosition(byteIndex);
-	}
+	public void setLoopPositionByFrame(int frameIndex);
 	
 	/**
 	 * Set the loop position of this Music by seconds.
 	 * @param seconds loop position to set by seconds
 	 */
-	public void setLoopPositionBySeconds(double seconds) {
-		int byteIndex = (int)(seconds * TinySound.FORMAT.getFrameRate() *
-			TinySound.FORMAT.getFrameSize());
-		this.reference.setLoopPosition(byteIndex);
-	}
+	public void setLoopPositionBySeconds(double seconds);
 	
 	/**
 	 * Get the volume of this Music.
 	 * @return volume of this Music
 	 */
-	public double getVolume() {
-		return this.reference.getVolume();
-	}
+	public double getVolume();
 	
 	/**
 	 * Set the volume of this Music.
 	 * @param volume the desired volume of this Music
 	 */
-	public void setVolume(double volume) {
-		if (volume >= 0.0) {
-			this.reference.setVolume(volume);
-		}
-	}
+	public void setVolume(double volume);
 	
 	/**
 	 * Unload this Music from the system.  Attempts to use this Music after
 	 * unloading will result in error.
 	 */
-	public void unload() {
-		//unregister the reference
-		this.mixer.unRegisterMusicReference(this.reference);
-		this.mixer = null;
-		this.left = null;
-		this.right = null;
-		this.reference = null;
-	}
-
+	public void unload();
+	
 }

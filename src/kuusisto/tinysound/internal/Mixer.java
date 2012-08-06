@@ -25,6 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package kuusisto.tinysound.internal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,8 +82,8 @@ public class Mixer {
 	public synchronized void unRegisterSoundReference(int soundID) {
 		//removal working backward is easier
 		for (int i = this.sounds.size() - 1; i >= 0; i--) {
-			if (this.sounds.get(i).SOUND_ID == soundID) {
-				this.sounds.remove(i);
+			if (this.sounds.get(i).getSoundID() == soundID) {
+				this.sounds.remove(i).dispose();
 			}
 		}
 	}
@@ -98,6 +99,9 @@ public class Mixer {
 	 * Unregister all Sounds registered with this Mixer.
 	 */
 	public synchronized void clearSounds() {
+		for (SoundReference s : this.sounds) {
+			s.dispose();
+		}
 		this.sounds.clear();
 	}
 	
@@ -148,11 +152,11 @@ public class Mixer {
 					bytesRead = true;
 					//remove the reference if done
 					if (sound.bytesAvailable() <= 0) {
-						this.sounds.remove(s);
+						this.sounds.remove(s).dispose();
 					}
 				}
 				else { //otherwise remove this reference
-					this.sounds.remove(s);
+					this.sounds.remove(s).dispose();
 				}
 			}
 			//if we actually read bytes, store in the buffer
@@ -207,11 +211,11 @@ public class Mixer {
 				sound.skipBytes(numBytes);
 				//remove the reference if done
 				if (sound.bytesAvailable() <= 0) {
-					this.sounds.remove(s);
+					this.sounds.remove(s).dispose();
 				}
 			}
 			else { //otherwise remove this reference
-				this.sounds.remove(s);
+				this.sounds.remove(s).dispose();
 			}
 		}
 	}

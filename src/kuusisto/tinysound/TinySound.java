@@ -41,6 +41,8 @@ import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import kuusisto.tinysound.internal.ByteList;
+import kuusisto.tinysound.internal.MemMusic;
+import kuusisto.tinysound.internal.MemSound;
 import kuusisto.tinysound.internal.Mixer;
 import kuusisto.tinysound.internal.UpdateRunner;
 
@@ -75,6 +77,8 @@ public class TinySound {
 	private static boolean inited = false;
 	//auto-updater for the system
 	private static UpdateRunner autoUpdater;
+	//counter for unique sound IDs
+	private static int soundCount = 0;
 	
 	/**
 	 * Initialize Tinysound.  This must be called before loading audio.
@@ -257,7 +261,7 @@ public class TinySound {
 			return null;
 		}
 		//construct the Music object and register it with the mixer
-		return new Music(data[0], data[1], TinySound.mixer);
+		return new MemMusic(data[0], data[1], TinySound.mixer);
 	}
 	
 	/**
@@ -342,7 +346,9 @@ public class TinySound {
 			return null;
 		}
 		//construct the Sound object
-		return new Sound(data[0], data[1], TinySound.mixer);
+		TinySound.soundCount++;
+		return new MemSound(data[0], data[1], TinySound.mixer,
+				TinySound.soundCount);
 	}
 	
 	/**
