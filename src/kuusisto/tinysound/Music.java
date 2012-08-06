@@ -144,8 +144,10 @@ public class Music {
 	 * @return loop position by sample frame
 	 */
 	public int getLoopPositionByFrame() {
+		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
+			TinySound.FORMAT.getChannels();
 		int byteIndex = this.reference.getLoopPosition();
-		return (byteIndex / TinySound.FORMAT.getFrameSize());
+		return (int)(byteIndex / bytesPerChannelForFrame);
 	}
 	
 	/**
@@ -153,9 +155,11 @@ public class Music {
 	 * @return loop position by seconds
 	 */
 	public double getLoopPositionBySeconds() {
+		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
+			TinySound.FORMAT.getChannels();
 		int byteIndex = this.reference.getLoopPosition();
-		return (int)(byteIndex / (TinySound.FORMAT.getFrameRate() *
-				TinySound.FORMAT.getFrameSize()));
+		return (byteIndex / (TinySound.FORMAT.getFrameRate() *
+				bytesPerChannelForFrame));
 	}
 	
 	/**
@@ -163,7 +167,10 @@ public class Music {
 	 * @param frameIndex sample frame loop position to set
 	 */
 	public void setLoopPositionByFrame(int frameIndex) {
-		int byteIndex = frameIndex * TinySound.FORMAT.getFrameSize();
+		//get the byte index for a channel
+		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
+			TinySound.FORMAT.getChannels();
+		int byteIndex = (int)(frameIndex * bytesPerChannelForFrame);
 		this.reference.setLoopPosition(byteIndex);
 	}
 	
@@ -172,8 +179,11 @@ public class Music {
 	 * @param seconds loop position to set by seconds
 	 */
 	public void setLoopPositionBySeconds(double seconds) {
+		//get the byte index for a channel
+		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
+			TinySound.FORMAT.getChannels();
 		int byteIndex = (int)(seconds * TinySound.FORMAT.getFrameRate() *
-			TinySound.FORMAT.getFrameSize());
+			bytesPerChannelForFrame);
 		this.reference.setLoopPosition(byteIndex);
 	}
 	
