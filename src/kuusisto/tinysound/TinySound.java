@@ -26,6 +26,7 @@
  */
 package kuusisto.tinysound;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -290,8 +291,6 @@ public class TinySound {
 			if (info == null) {
 				return null;
 			}
-			System.out.println("stream info acquired");//XXX
-			System.out.println("creating music object"); //XXX
 			return new StreamMusic(info.URL, info.NUM_BYTES_PER_CHANNEL,
 					TinySound.mixer);
 		}
@@ -730,7 +729,8 @@ public class TinySound {
 		//we have the file, now we want to be able to write to it
 		OutputStream out = null;
 		try {
-			out = new FileOutputStream(temp);
+			out = new BufferedOutputStream(new FileOutputStream(temp),
+					(512 * 1024)); //buffer 512kb
 		} catch (FileNotFoundException e) {
 			System.err.println("Failed to open stream file for writing!");
 			return null;
