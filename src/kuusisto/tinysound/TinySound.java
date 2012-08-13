@@ -28,7 +28,10 @@ package kuusisto.tinysound;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -44,6 +47,9 @@ import kuusisto.tinysound.internal.ByteList;
 import kuusisto.tinysound.internal.MemMusic;
 import kuusisto.tinysound.internal.MemSound;
 import kuusisto.tinysound.internal.Mixer;
+import kuusisto.tinysound.internal.StreamInfo;
+import kuusisto.tinysound.internal.StreamMusic;
+import kuusisto.tinysound.internal.StreamSound;
 import kuusisto.tinysound.internal.UpdateRunner;
 
 /**
@@ -187,6 +193,11 @@ public class TinySound {
 	 * @return Music resource as specified, null if not found/loaded
 	 */
 	public static Music loadMusic(String name) {
+		return TinySound.loadMusic(name, false);
+	}
+	
+	//TODO comment
+	public static Music loadMusic(String name, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -206,7 +217,7 @@ public class TinySound {
 			System.err.println("Unable to find resource " + name + "!");
 			return null;
 		}
-		return TinySound.loadMusic(url);
+		return TinySound.loadMusic(url, streamFromFile);
 	}
 	
 	/**
@@ -215,6 +226,11 @@ public class TinySound {
 	 * @return Music from file as specified, null if not found/loaded
 	 */
 	public static Music loadMusic(File file) {
+		return TinySound.loadMusic(file, false);
+	}
+	
+	//TODO
+	public static Music loadMusic(File file, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -231,7 +247,7 @@ public class TinySound {
 			System.err.println("Unable to find file " + file + "!");
 			return null;
 		}
-		return TinySound.loadMusic(url);
+		return TinySound.loadMusic(url, streamFromFile);
 	}
 	
 	/**
@@ -240,6 +256,11 @@ public class TinySound {
 	 * @return Music from URL as specified, null if not found/loaded
 	 */
 	public static Music loadMusic(URL url) {
+		return TinySound.loadMusic(url, false);
+	}
+	
+	//TODO
+	public static Music loadMusic(URL url, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -249,6 +270,7 @@ public class TinySound {
 		if (url == null) {
 			return null;
 		}
+		//get a valid stream of audio data
 		AudioInputStream audioStream = TinySound.getValidAudioStream(url);
 		//check for failure
 		if (audioStream == null) {
@@ -259,6 +281,19 @@ public class TinySound {
 		//check for failure
 		if (data == null) {
 			return null;
+		}
+		//handle differently if streaming from a file
+		if (streamFromFile) {
+			//TODO
+			StreamInfo info = TinySound.createFileStream(data);
+			//check for failure
+			if (info == null) {
+				return null;
+			}
+			System.out.println("stream info acquired");//XXX
+			System.out.println("creating music object"); //XXX
+			return new StreamMusic(info.URL, info.NUM_BYTES_PER_CHANNEL,
+					TinySound.mixer);
 		}
 		//construct the Music object and register it with the mixer
 		return new MemMusic(data[0], data[1], TinySound.mixer);
@@ -271,6 +306,11 @@ public class TinySound {
 	 * @return Sound resource as specified, null if not found/loaded
 	 */
 	public static Sound loadSound(String name) {
+		return TinySound.loadSound(name, false);
+	}
+	
+	//TODO
+	public static Sound loadSound(String name, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -290,7 +330,7 @@ public class TinySound {
 			System.err.println("Unable to find resource " + name + "!");
 			return null;
 		}
-		return TinySound.loadSound(url);
+		return TinySound.loadSound(url, streamFromFile);
 
 	}
 	
@@ -300,6 +340,11 @@ public class TinySound {
 	 * @return Sound from file as specified, null if not found/loaded
 	 */
 	public static Sound loadSound(File file) {
+		return TinySound.loadSound(file, false);
+	}
+	
+	//TODO
+	public static Sound loadSound(File file, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -316,7 +361,7 @@ public class TinySound {
 			System.err.println("Unable to find file " + file + "!");
 			return null;
 		}
-		return TinySound.loadSound(url);
+		return TinySound.loadSound(url, streamFromFile);
 	}
 	
 	/**
@@ -325,6 +370,11 @@ public class TinySound {
 	 * @return Sound from URL as specified, null if not found/loaded
 	 */
 	public static Sound loadSound(URL url) {
+		return TinySound.loadSound(url, false);
+	}
+	
+	//TODO
+	public static Sound loadSound(URL url, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
 			System.err.println("TinySound not initialized!");
@@ -334,6 +384,7 @@ public class TinySound {
 		if (url == null) {
 			return null;
 		}
+		//get a valid stream of audio data
 		AudioInputStream audioStream = TinySound.getValidAudioStream(url);
 		//check for failure
 		if (audioStream == null) {
@@ -344,6 +395,18 @@ public class TinySound {
 		//check for failure
 		if (data == null) {
 			return null;
+		}
+		//handle differently if streaming from file
+		if (streamFromFile) {
+			//TODO
+			StreamInfo info = TinySound.createFileStream(data);
+			//check for failure
+			if (info == null) {
+				return null;
+			}
+			TinySound.soundCount++;
+			return new StreamSound(info.URL, info.NUM_BYTES_PER_CHANNEL,
+					TinySound.mixer, TinySound.soundCount);
 		}
 		//construct the Sound object
 		TinySound.soundCount++;
@@ -642,6 +705,62 @@ public class TinySound {
 			}
 		}
 		return list.asArray();
+	}
+	
+	//TODO
+	private static StreamInfo createFileStream(byte[][] data) {
+		//first try to create a file for the data to live in
+		File temp = null;
+		try {
+			temp = File.createTempFile("tiny", "sound");
+			//make sure this file will be deleted on exit
+			temp.deleteOnExit();
+		} catch (IOException e) {
+			System.err.println("Failed to create file for streaming!");
+			return null;
+		}
+		//see if we can get the URL for this file
+		URL url = null;
+		try {
+			url = temp.toURI().toURL();
+		} catch (MalformedURLException e1) {
+			System.err.println("Failed to get URL for stream file!");
+			return null;
+		}
+		//we have the file, now we want to be able to write to it
+		OutputStream out = null;
+		try {
+			out = new FileOutputStream(temp);
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to open stream file for writing!");
+			return null;
+		}
+		//write the bytes to the file
+		try {
+			//write two at a time from each channel
+			for (int i = 0; i < data[0].length; i += 2) {
+				try {
+					//first left
+					out.write(data[0], i, 2);
+					//then right
+					out.write(data[1], i, 2);
+				}
+				catch (IOException e) {
+					//hmm
+					System.err.println("Failed writing bytes to stream file!");
+					return null;
+				}
+			}
+		}
+		finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+				//what?
+				System.err.println("Failed closing stream file after writing!");
+			}
+		}
+		return new StreamInfo(url, data[0].length);
 	}
 	
 	/**

@@ -182,11 +182,15 @@ public class StreamSound implements Sound {
 			//spin read since skip is not always supported apparently and won't
 			//guarantee a correct skip amount
 			int tmpRead = 0;
-			int numRead = 0;
+			long numRead = 0;
 			try {
 				while (numRead < numSkip && tmpRead != -1) {
-					tmpRead = this.data.read(this.skipBuf, numRead,
-							this.skipBuf.length - numRead);
+					//determine safe length to read
+					long remaining = numSkip - numRead;
+					int len = remaining > this.skipBuf.length ?
+							this.skipBuf.length : (int)remaining;
+					//and read
+					tmpRead = this.data.read(this.skipBuf, 0, len);
 					numRead += tmpRead;
 				}
 			} catch (IOException e) {

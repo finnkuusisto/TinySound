@@ -39,13 +39,13 @@ public class StreamMusic implements Music {
 	private Mixer mixer;
 	private MusicReference reference;
 	
-	public StreamMusic(URL dataURL, Mixer mixer) {
+	public StreamMusic(URL dataURL, long numBytesPerChannel, Mixer mixer) {
 		this.dataURL = dataURL;
 		this.mixer = mixer;
 		try {
 			//TODO should this be thrown from here?
 			this.reference = new StreamMusicReference(this.dataURL, false,
-					false, 0, 0, 1.0);
+					false, 0, 0, numBytesPerChannel, 1.0);
 			this.mixer.registerMusicReference(this.reference);
 		} catch (IOException e) {
 			System.err.println("Failed to open stream for Music");
@@ -215,13 +215,14 @@ public class StreamMusic implements Music {
 		private double volume;
 		
 		public StreamMusicReference(URL dataURL, boolean playing, boolean loop,
-				int loopPosition, int position, double volume) 
-				throws IOException {
+				long loopPosition, long position, long numBytesPerChannel,
+				double volume) throws IOException {
 			this.url = dataURL;
 			this.playing = playing;
 			this.loop = loop;
 			this.loopPosition = loopPosition;
 			this.position = position;
+			this.numBytesPerChannel = numBytesPerChannel;
 			this.volume = volume;
 			this.buf = new byte[4];
 			this.skipBuf = new byte[50];
@@ -391,8 +392,12 @@ public class StreamMusic implements Music {
 			int numRead = 0;
 			try {
 				while (numRead < numSkip && tmpRead != -1) {
-					tmpRead = this.data.read(this.skipBuf, numRead,
-							this.skipBuf.length - numRead);
+					//determine safe length to read
+					long remaining = numSkip - numRead;
+					int len = remaining > this.skipBuf.length ?
+							this.skipBuf.length : (int)remaining;
+					//and read
+					tmpRead = this.data.read(this.skipBuf, 0, len);
 					numRead += tmpRead;
 				}
 			} catch (IOException e) {
