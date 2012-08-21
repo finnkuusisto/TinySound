@@ -27,9 +27,9 @@
 package kuusisto.tinysound.internal;
 
 /**
- * The SoundReference class is the Mixers interface to the audio data of a Sound
- * object.  SoundReference is an internal class of the TinySound system and
- * should be of no real concern to the average user of TinySound.
+ * The SoundReference interface is the Mixer's interface to the audio data of a
+ * Sound object.  SoundReference is an internal interface of the TinySound
+ * system and should be of no real concern to the average user of TinySound.
  * 
  * @author Finn Kuusisto
  */

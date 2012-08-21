@@ -30,9 +30,8 @@ import kuusisto.tinysound.Music;
 import kuusisto.tinysound.TinySound;
 
 /**
- * The Music class is an abstraction for music.  Music objects should only be
- * loaded via the TinySound <code>loadMusic()</code> functions.  Music can be
- * played, paused, resumed, stopped and looped from specified positions.
+ * The MemMusic class is an implementation of the Music interface that stores
+ * all audio data in memory for low latency.
  * 
  * @author Finn Kuusisto
  */
@@ -44,8 +43,8 @@ public class MemMusic implements Music {
 	private MusicReference reference;
 	
 	/**
-	 * Construct a new Music with the given music data and the Mixer with which
-	 * to register this Music.
+	 * Construct a new MemMusic with the given music data and the Mixer with
+	 * which to register this MemMusic.
 	 * @param left left channel of music data
 	 * @param right right channel of music data
 	 * @param mixer Mixer with which this Music is registered
@@ -60,19 +59,21 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Play this Music and loop if specified.
-	 * @param loop if this Music should loop
+	 * Play this MemMusic and loop if specified.
+	 * @param loop if this MemMusic should loop
 	 */
+	@Override
 	public void play(boolean loop) {
 		this.reference.setPlaying(true);
 		this.reference.setLoop(loop);
 	}
 	
 	/**
-	 * Play this Music at the specified volume and loop if specified.
-	 * @param loop if this Music should loop
+	 * Play this MemMusic at the specified volume and loop if specified.
+	 * @param loop if this MemMusic should loop
 	 * @param volume the volume to play the this Music
 	 */
+	@Override
 	public void play(boolean loop, double volume) {
 		this.reference.setPlaying(true);
 		this.setLoop(loop);
@@ -80,70 +81,79 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Stop playing this Music and set its position to the beginning.
+	 * Stop playing this MemMusic and set its position to the beginning.
 	 */
+	@Override
 	public void stop() {
 		this.reference.setPlaying(false);
 		this.rewind();
 	}
 	
 	/**
-	 * Stop playing this Music and keep its current position.
+	 * Stop playing this MemMusic and keep its current position.
 	 */
+	@Override
 	public void pause() {
 		this.reference.setPlaying(false);
 	}
 	
 	/**
-	 * Play this Music from its current position.
+	 * Play this MemMusic from its current position.
 	 */
+	@Override
 	public void resume() {
 		this.reference.setPlaying(true);
 	}
 	
 	/**
-	 * Set this Music's position to the beginning.
+	 * Set this MemMusic's position to the beginning.
 	 */
+	@Override
 	public void rewind() {
 		this.reference.setPosition(0);
 	}
 	
 	/**
-	 * Set this Music's position to the loop position.
+	 * Set this MemMusic's position to the loop position.
 	 */
+	@Override
 	public void rewindToLoopPosition() {
 		long byteIndex = this.reference.getLoopPosition();
 		this.reference.setPosition(byteIndex);
 	}
 	
 	/**
-	 * Determine if this Music is playing.
-	 * @return true if this Music is playing
+	 * Determine if this MemMusic is playing.
+	 * @return true if this MemMusic is playing
 	 */
+	@Override
 	public boolean playing() {
 		return this.reference.getPlaying();
 	}
 	
 	/**
-	 * Determine if this Music will loop.
-	 * @return true if this Music will loop
+	 * Determine if this MemMusic will loop.
+	 * @return true if this MemMusic will loop
 	 */
+	@Override
 	public boolean loop() {
 		return this.reference.getLoop();
 	}
 	
 	/**
-	 * Set whether this Music will loop.
-	 * @param loop whether this Music will loop
+	 * Set whether this MemMusic will loop.
+	 * @param loop whether this MemMusic will loop
 	 */
+	@Override
 	public void setLoop(boolean loop) {
 		this.reference.setLoop(loop);
 	}
 	
 	/**
-	 * Get the loop position of this Music by sample frame.
+	 * Get the loop position of this MemMusic by sample frame.
 	 * @return loop position by sample frame
 	 */
+	@Override
 	public int getLoopPositionByFrame() {
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
 			TinySound.FORMAT.getChannels();
@@ -152,9 +162,10 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Get the loop position of this Music by seconds.
+	 * Get the loop position of this MemMusic by seconds.
 	 * @return loop position by seconds
 	 */
+	@Override
 	public double getLoopPositionBySeconds() {
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
 			TinySound.FORMAT.getChannels();
@@ -164,9 +175,10 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Set the loop position of this Music by sample frame.
+	 * Set the loop position of this MemMusic by sample frame.
 	 * @param frameIndex sample frame loop position to set
 	 */
+	@Override
 	public void setLoopPositionByFrame(int frameIndex) {
 		//get the byte index for a channel
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
@@ -176,9 +188,10 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Set the loop position of this Music by seconds.
+	 * Set the loop position of this MemMusic by seconds.
 	 * @param seconds loop position to set by seconds
 	 */
+	@Override
 	public void setLoopPositionBySeconds(double seconds) {
 		//get the byte index for a channel
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
@@ -189,17 +202,19 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Get the volume of this Music.
-	 * @return volume of this Music
+	 * Get the volume of this MemMusic.
+	 * @return volume of this MemMusic
 	 */
+	@Override
 	public double getVolume() {
 		return this.reference.getVolume();
 	}
 	
 	/**
-	 * Set the volume of this Music.
-	 * @param volume the desired volume of this Music
+	 * Set the volume of this MemMusic.
+	 * @param volume the desired volume of this MemMusic
 	 */
+	@Override
 	public void setVolume(double volume) {
 		if (volume >= 0.0) {
 			this.reference.setVolume(volume);
@@ -207,9 +222,10 @@ public class MemMusic implements Music {
 	}
 	
 	/**
-	 * Unload this Music from the system.  Attempts to use this Music after
-	 * unloading will result in error.
+	 * Unload this MemMusic from the system.  Attempts to use this MemMusic
+	 * after unloading will result in error.
 	 */
+	@Override
 	public void unload() {
 		//unregister the reference
 		this.mixer.unRegisterMusicReference(this.reference);
@@ -225,9 +241,8 @@ public class MemMusic implements Music {
 	/////////////
 	
 	/**
-	 * The MusicReference class is the Mixers interface to the audio data of a
-	 * Music object.  MusicReference is an internal class of the TinySound
-	 * system and should be of no real concern to the average user of TinySound.
+	 * The MemMusicReference is an implementation of the MusicReference
+	 * interface.
 	 * 
 	 * @author Finn Kuusisto
 	 */
@@ -242,12 +257,13 @@ public class MemMusic implements Music {
 		private double volume;
 		
 		/**
-		 * Construct a new MusicReference with the given audio data and
+		 * Construct a new MemMusicReference with the given audio data and
 		 * settings.
 		 * @param left left channel of music data
 		 * @param right right channel of music data
 		 * @param playing true if the music should be playing
 		 * @param loop true if the music should loop
+		 * @param loopPosition byte index of the loop position in music data
 		 * @param position byte index position in music data
 		 * @param volume volume to play the music
 		 */
@@ -263,8 +279,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the playing setting of this MusicReference.
-		 * @return true if this MusicReference is set to play
+		 * Get the playing setting of this MemMusicReference.
+		 * @return true if this MemMusicReference is set to play
 		 */
 		@Override
 		public synchronized boolean getPlaying() {
@@ -272,8 +288,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the loop setting of this MusicReference.
-		 * @return true if this MusicReference is set to loop
+		 * Get the loop setting of this MemMusicReference.
+		 * @return true if this MemMusicReference is set to loop
 		 */
 		@Override
 		public synchronized boolean getLoop() {
@@ -281,8 +297,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the byte index of this MusicReference.
-		 * @return byte index of this MusicReference
+		 * Get the byte index of this MemMusicReference.
+		 * @return byte index of this MemMusicReference
 		 */
 		@Override
 		public synchronized long getPosition() {
@@ -290,8 +306,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the loop-position byte index of this MusicReference.
-		 * @return loop-position byte index of this MusicReference
+		 * Get the loop-position byte index of this MemMusicReference.
+		 * @return loop-position byte index of this MemMusicReference
 		 */
 		@Override
 		public synchronized long getLoopPosition() {
@@ -299,8 +315,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the volume of this MusicReference.
-		 * @return volume of this MusicReference
+		 * Get the volume of this MemMusicReference.
+		 * @return volume of this MemMusicReference
 		 */
 		@Override
 		public synchronized double getVolume() {
@@ -308,8 +324,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Set whether this MusicReference is playing.
-		 * @param playing whether this MusicReference is playing
+		 * Set whether this MemMusicReference is playing.
+		 * @param playing whether this MemMusicReference is playing
 		 */
 		@Override
 		public synchronized void setPlaying(boolean playing) {
@@ -317,8 +333,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Set whether this MusicReference will loop.
-		 * @param loop whether this MusicReference will loop
+		 * Set whether this MemMusicReference will loop.
+		 * @param loop whether this MemMusicReference will loop
 		 */
 		@Override
 		public synchronized void setLoop(boolean loop) {
@@ -326,7 +342,7 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Set the byte index of this MusicReference.
+		 * Set the byte index of this MemMusicReference.
 		 * @param position the byte index to set
 		 */
 		@Override
@@ -337,7 +353,7 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Set the loop-position byte index of this MusicReference.
+		 * Set the loop-position byte index of this MemMusicReference.
 		 * @param loopPosition the loop-position byte index to set
 		 */
 		@Override
@@ -348,8 +364,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Set the volume of this MusicReference.
-		 * @param volume the desired volume of this MusicReference
+		 * Set the volume of this MemMusicReference.
+		 * @param volume the desired volume of this MemMusicReference
 		 */
 		@Override
 		public synchronized void setVolume(double volume) {
@@ -357,8 +373,8 @@ public class MemMusic implements Music {
 		}
 		
 		/**
-		 * Get the number of bytes remaining for each channel until the end of this
-		 * Music.
+		 * Get the number of bytes remaining for each channel until the end of
+		 * this MemMusicReference.
 		 * @return number of bytes remaining for each channel
 		 */
 		@Override
@@ -415,7 +431,7 @@ public class MemMusic implements Music {
 
 		/**
 		 * Does any cleanup necessary to dispose of resources in use by this
-		 * MusicReference.
+		 * MemMusicReference.
 		 */
 		@Override
 		public synchronized void dispose() {

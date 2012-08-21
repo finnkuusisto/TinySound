@@ -32,6 +32,12 @@ import java.net.URL;
 
 import kuusisto.tinysound.Sound;
 
+/**
+ * Thes StreamSound class is an implementation of the Sound interface that
+ * streams audio data from a temporary file to reduce memory overhead.
+ * 
+ * @author Finn Kuusisto
+ */
 public class StreamSound implements Sound {
 	
 	private URL dataURL;
@@ -39,20 +45,39 @@ public class StreamSound implements Sound {
 	private Mixer mixer;
 	private final int ID;
 	
+	/**
+	 * Construct a new StreamSound with the given data and Mixer which will
+	 * handle this StreamSound.
+	 * @param dataURL URL of the temporary file containing audio data
+	 * @param numBytesPerChannel the total number of bytes for each channel in
+	 * the file
+	 * @param mixer Mixer that will handle this StreamSound
+	 * @param id unique ID of this StreamSound
+	 * @throws IOException if a stream cannot be opened from the URL
+	 */
 	public StreamSound(URL dataURL, long numBytesPerChannel, Mixer mixer,
-			int id) {
+			int id) throws IOException {
 		this.dataURL = dataURL;
 		this.numBytesPerChannel = numBytesPerChannel;
 		this.mixer = mixer;
 		this.ID = id;
-		//TODO open and close a stream to check for immediate I/O issues?
+		//open and close a stream to check for immediate issues
+		InputStream temp = this.dataURL.openStream();
+		temp.close();
 	}
 
+	/**
+	 * Plays this StreamSound.
+	 */
 	@Override
 	public void play() {
 		this.play(1.0);
 	}
 
+	/**
+	 * Plays this StreamSound with a specified volume.
+	 * @param volume the volume at which to play this StreamSound
+	 */
 	@Override
 	public void play(double volume) {
 		//dispatch a SoundReference to the mixer
@@ -66,11 +91,20 @@ public class StreamSound implements Sound {
 		}
 	}
 
+	/**
+	 * Stops this StreamSound from playing.  Note that if this StreamSound was
+	 * played repeatedly in an overlapping fashion, all instances of this
+	 * StreamSound still playing will be stopped.
+	 */
 	@Override
 	public void stop() {
 		this.mixer.unRegisterSoundReference(this.ID);
 	}
 
+	/**
+	 * Unloads this StreamSound from the system.  Attempts to use this
+	 * StreamSound after unloading will result in error.
+	 */
 	@Override
 	public void unload() {
 		this.mixer.unRegisterSoundReference(this.ID);
@@ -82,6 +116,12 @@ public class StreamSound implements Sound {
 	//Reference//
 	/////////////
 	
+	/**
+	 * The StreamSoundReference class is an implementation of the SoundReference
+	 * interface.
+	 * 
+	 * @Finn Kuusisto
+	 */
 	private static class StreamSoundReference implements SoundReference {
 		
 		public final int SOUND_ID;
@@ -93,6 +133,14 @@ public class StreamSound implements Sound {
 		private byte[] buf;
 		private byte[] skipBuf;
 		
+		/**
+		 * Construct a new StreamSoundReference with the given reference data.
+		 * @param data the stream of the audio data
+		 * @param numBytesPerChannel the total number of bytes for each channel
+		 * in the stream
+		 * @param volume volume at which to play the sound
+		 * @param soundID ID of the StreamSound for which this is a reference
+		 */
 		public StreamSoundReference(InputStream data, long numBytesPerChannel,
 				double volume, int soundID) {
 			this.data = data;
@@ -105,12 +153,22 @@ public class StreamSound implements Sound {
 		}
 
 		/**
-		 * Get the ID of the Sound that produced this SoundReference.
-		 * @return the ID of this SoundReference's parent Sound
+		 * Get the ID of the StreamSound that produced this
+		 * StreamSoundReference.
+		 * @return the ID of this StreamSoundReference's parent StreamSound
 		 */
 		@Override
 		public int getSoundID() {
 			return this.SOUND_ID;
+		}
+
+		/**
+		 * Gets the volume of this StreamSoundReference.
+		 * @return volume of this StreamSoundReference
+		 */
+		@Override
+		public double getVolume() {
+			return this.volume;
 		}
 
 		/**
@@ -120,13 +178,55 @@ public class StreamSound implements Sound {
 		@Override
 		public long bytesAvailable() {
 			return this.numBytesPerChannel - this.position;
-		}
+		}		
 
+		/**
+		 * Skip a specified number of bytes of the audio data.
+		 * @param num number of bytes to skip
+		 */
 		@Override
-		public double getVolume() {
-			return this.volume;
+		public void skipBytes(long num) {
+			//terminate early if it would finish the sound
+			if (this.position + num >= this.numBytesPerChannel) {
+				this.position = this.numBytesPerChannel;
+				return;
+			}
+			//this is the number of bytes to skip per channel, so double it
+			long numSkip = num * 2;
+			//spin read since skip is not always supported apparently and won't
+			//guarantee a correct skip amount
+			int tmpRead = 0;
+			long numRead = 0;
+			try {
+				while (numRead < numSkip && tmpRead != -1) {
+					//determine safe length to read
+					long remaining = numSkip - numRead;
+					int len = remaining > this.skipBuf.length ?
+							this.skipBuf.length : (int)remaining;
+					//and read
+					tmpRead = this.data.read(this.skipBuf, 0, len);
+					numRead += tmpRead;
+				}
+			} catch (IOException e) {
+				//hmm... I guess invalidate this reference
+				this.position = this.numBytesPerChannel;
+			}
+			//increment the position appropriately
+			if (tmpRead == -1) { //reached end of file in the middle of reading
+				this.position = this.numBytesPerChannel;
+			}
+			else {
+				this.position += num;
+			}
 		}
-
+		
+		/**
+		 * Get the next two bytes from the sound data in the specified
+		 * endianness.
+		 * @param data length-2 array to write in next two bytes from each
+		 * channel
+		 * @param bigEndian true if the bytes should be read big-endian
+		 */
 		@Override
 		public void nextTwoBytes(int[] data, boolean bigEndian) {
 			//try to read audio data
@@ -170,42 +270,10 @@ public class StreamSound implements Sound {
 			}
 		}
 
-		@Override
-		public void skipBytes(long num) {
-			//terminate early if it would finish the sound
-			if (this.position + num >= this.numBytesPerChannel) {
-				this.position = this.numBytesPerChannel;
-				return;
-			}
-			//this is the number of bytes to skip per channel, so double it
-			long numSkip = num * 2;
-			//spin read since skip is not always supported apparently and won't
-			//guarantee a correct skip amount
-			int tmpRead = 0;
-			long numRead = 0;
-			try {
-				while (numRead < numSkip && tmpRead != -1) {
-					//determine safe length to read
-					long remaining = numSkip - numRead;
-					int len = remaining > this.skipBuf.length ?
-							this.skipBuf.length : (int)remaining;
-					//and read
-					tmpRead = this.data.read(this.skipBuf, 0, len);
-					numRead += tmpRead;
-				}
-			} catch (IOException e) {
-				//hmm... I guess invalidate this reference
-				this.position = this.numBytesPerChannel;
-			}
-			//increment the position appropriately
-			if (tmpRead == -1) { //reached end of file in the middle of reading
-				this.position = this.numBytesPerChannel;
-			}
-			else {
-				this.position += num;
-			}
-		}
-
+		/**
+		 * Does any cleanup necessary to dispose of resources in use by this
+		 * StreamSoundReference.
+		 */
 		@Override
 		public void dispose() {
 			this.position = this.numBytesPerChannel;

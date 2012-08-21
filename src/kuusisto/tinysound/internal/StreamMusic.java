@@ -33,28 +33,39 @@ import java.net.URL;
 import kuusisto.tinysound.Music;
 import kuusisto.tinysound.TinySound;
 
+/**
+ * The StreamMusic class is an implementation of the Music interface that
+ * streams audio data from a temporary file to reduce memory overhead.
+ * 
+ * @author Finn Kuusisto
+ */
 public class StreamMusic implements Music {
 	
 	private URL dataURL;
 	private Mixer mixer;
 	private MusicReference reference;
 	
-	public StreamMusic(URL dataURL, long numBytesPerChannel, Mixer mixer) {
+	/**
+	 * Construct a new StreamMusic with the given data and the Mixer with which
+	 * to register this StreamMusic.
+	 * @param dataURL URL of the temporary file containing audio data
+	 * @param numBytesPerChannel the total number of bytes for each channel in
+	 * the file
+	 * @param mixer Mixer that will handle this StreamSound
+	 * @throws IOException if a stream cannot be opened from the URL
+	 */
+	public StreamMusic(URL dataURL, long numBytesPerChannel, Mixer mixer)
+			throws IOException {
 		this.dataURL = dataURL;
 		this.mixer = mixer;
-		try {
-			//TODO should this be thrown from here?
-			this.reference = new StreamMusicReference(this.dataURL, false,
-					false, 0, 0, numBytesPerChannel, 1.0);
-			this.mixer.registerMusicReference(this.reference);
-		} catch (IOException e) {
-			System.err.println("Failed to open stream for Music");
-		}
+		this.reference = new StreamMusicReference(this.dataURL, false, false, 0,
+				0, numBytesPerChannel, 1.0);
+		this.mixer.registerMusicReference(this.reference);
 	}
 
 	/**
-	 * Play this Music and loop if specified.
-	 * @param loop if this Music should loop
+	 * Play this StreamMusic and loop if specified.
+	 * @param loop if this StreamMusic should loop
 	 */
 	public void play(boolean loop) {
 		this.reference.setPlaying(true);
@@ -62,9 +73,9 @@ public class StreamMusic implements Music {
 	}
 	
 	/**
-	 * Play this Music at the specified volume and loop if specified.
-	 * @param loop if this Music should loop
-	 * @param volume the volume to play the this Music
+	 * Play this StreamMusic at the specified volume and loop if specified.
+	 * @param loop if this StreamMusic should loop
+	 * @param volume the volume to play the this StreamMusic
 	 */
 	public void play(boolean loop, double volume) {
 		this.reference.setPlaying(true);
@@ -73,7 +84,7 @@ public class StreamMusic implements Music {
 	}
 	
 	/**
-	 * Stop playing this Music and set its position to the beginning.
+	 * Stop playing this StreamMusic and set its position to the beginning.
 	 */
 	public void stop() {
 		this.reference.setPlaying(false);
@@ -81,28 +92,28 @@ public class StreamMusic implements Music {
 	}
 	
 	/**
-	 * Stop playing this Music and keep its current position.
+	 * Stop playing this StreamMusic and keep its current position.
 	 */
 	public void pause() {
 		this.reference.setPlaying(false);
 	}
 	
 	/**
-	 * Play this Music from its current position.
+	 * Play this StreamMusic from its current position.
 	 */
 	public void resume() {
 		this.reference.setPlaying(true);
 	}
 	
 	/**
-	 * Set this Music's position to the beginning.
+	 * Set this StreamMusic's position to the beginning.
 	 */
 	public void rewind() {
 		this.reference.setPosition(0);
 	}
 	
 	/**
-	 * Set this Music's position to the loop position.
+	 * Set this StreamMusic's position to the loop position.
 	 */
 	public void rewindToLoopPosition() {
 		long byteIndex = this.reference.getLoopPosition();
@@ -110,29 +121,33 @@ public class StreamMusic implements Music {
 	}
 	
 	/**
-	 * Determine if this Music is playing.
-	 * @return true if this Music is playing
+	 * Determine if this StreamMusic is playing.
+	 * @return true if this StreamMusic is playing
 	 */
 	public boolean playing() {
 		return this.reference.getPlaying();
 	}
 	
 	/**
-	 * Determine if this Music will loop.
-	 * @return true if this Music will loop
+	 * Determine if this StreamMusic will loop.
+	 * @return true if this StreamMusic will loop
 	 */
 	public boolean loop() {
 		return this.reference.getLoop();
 	}
 	
 	/**
-	 * Set whether this Music will loop.
-	 * @param loop whether this Music will loop
+	 * Set whether this StreamMusic will loop.
+	 * @param loop whether this StreamMusic will loop
 	 */
 	public void setLoop(boolean loop) {
 		this.reference.setLoop(loop);
 	}
 
+	/**
+	 * Get the loop position of this StreamMusic by sample frame.
+	 * @return loop position by sample frame
+	 */
 	@Override
 	public int getLoopPositionByFrame() {
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
@@ -141,6 +156,10 @@ public class StreamMusic implements Music {
 		return (int)(byteIndex / bytesPerChannelForFrame);
 	}
 
+	/**
+	 * Get the loop position of this StreamMusic by seconds.
+	 * @return loop position by seconds
+	 */
 	@Override
 	public double getLoopPositionBySeconds() {
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
@@ -150,6 +169,10 @@ public class StreamMusic implements Music {
 			bytesPerChannelForFrame));
 	}
 
+	/**
+	 * Set the loop position of this StreamMusic by sample frame.
+	 * @param frameIndex sample frame loop position to set
+	 */
 	@Override
 	public void setLoopPositionByFrame(int frameIndex) {
 		//get the byte index for a channel
@@ -159,6 +182,10 @@ public class StreamMusic implements Music {
 		this.reference.setLoopPosition(byteIndex);
 	}
 
+	/**
+	 * Set the loop position of this StreamMusic by seconds.
+	 * @param seconds loop position to set by seconds
+	 */
 	@Override
 	public void setLoopPositionBySeconds(double seconds) {
 		//get the byte index for a channel
@@ -170,16 +197,16 @@ public class StreamMusic implements Music {
 	}
 	
 	/**
-	 * Get the volume of this Music.
-	 * @return volume of this Music
+	 * Get the volume of this StreamMusic.
+	 * @return volume of this StreamMusic
 	 */
 	public double getVolume() {
 		return this.reference.getVolume();
 	}
 	
 	/**
-	 * Set the volume of this Music.
-	 * @param volume the desired volume of this Music
+	 * Set the volume of this StreamMusic.
+	 * @param volume the desired volume of this StreamMusic
 	 */
 	public void setVolume(double volume) {
 		if (volume >= 0.0) {
@@ -187,6 +214,10 @@ public class StreamMusic implements Music {
 		}
 	}
 
+	/**
+	 * Unload this MemMusic from the system.  Attempts to use this MemMusic
+	 * after unloading will result in error.
+	 */
 	@Override
 	public void unload() {
 		//unregister the reference
@@ -201,6 +232,10 @@ public class StreamMusic implements Music {
 	//Reference//
 	/////////////
 
+	/**
+	 * The StreamMusicReference is an implementation of the MusicReference
+	 * interface.
+	 */
 	private static class StreamMusicReference implements MusicReference {
 		
 		private URL url;
@@ -214,6 +249,19 @@ public class StreamMusic implements Music {
 		private long position;
 		private double volume;
 		
+		/**
+		 * Constructs a new StreamMusicReference with the given audio data and
+		 * settings.
+		 * @param dataURL URL of the temporary file containing audio data
+		 * @param playing true if the music should be playing
+		 * @param loop true if the music should loop
+		 * @param loopPosition byte index of the loop position in music data
+		 * @param position byte index position in music data
+		 * @param numBytesPerChannel the total number of bytes for each channel
+		 * in the file
+		 * @param volume volume to play the music
+		 * @throws IOException if a stream cannot be opened from the URL
+		 */
 		public StreamMusicReference(URL dataURL, boolean playing, boolean loop,
 				long loopPosition, long position, long numBytesPerChannel,
 				double volume) throws IOException {
@@ -230,51 +278,73 @@ public class StreamMusic implements Music {
 			this.data = this.url.openStream();
 		}
 
+		/**
+		 * Get the playing setting of this StreamMusicReference.
+		 * @return true if this StreamMusicReference is set to play
+		 */
 		@Override
 		public synchronized boolean getPlaying() {
 			return this.playing;
 		}
 
+		/**
+		 * Get the loop setting of this StreamMusicReference.
+		 * @return true if this StreamMusicReference is set to loop
+		 */
 		@Override
 		public synchronized boolean getLoop() {
 			return this.loop;
 		}
 		
+		/**
+		 * Get the byte index of this StreamMusicReference.
+		 * @return byte index of this StreamMusicReference
+		 */
 		@Override
 		public synchronized long getPosition() {
 			return this.position;
 		}
 		
+		/**
+		 * Get the loop-position byte index of this StreamMusicReference.
+		 * @return loop-position byte index of this StreamMusicReference
+		 */
 		@Override
 		public synchronized long getLoopPosition() {
 			return this.loopPosition;
 		}
 
 		/**
-		 * Get the number of bytes remaining for each channel until the end of
-		 * this Music.
-		 * @return number of bytes remaining for each channel
+		 * Get the volume of this StreamMusicReference.
+		 * @return volume of this StreamMusicReference
 		 */
-		@Override
-		public synchronized long bytesAvailable() {
-			return this.numBytesPerChannel - this.position;
-		}
-
 		@Override
 		public synchronized double getVolume() {
 			return this.volume;
 		}
 
+		/**
+		 * Set whether this StreamMusicReference is playing.
+		 * @param playing whether this StreamMusicReference is playing
+		 */
 		@Override
 		public synchronized void setPlaying(boolean playing) {
 			this.playing = playing;
 		}
 
+		/**
+		 * Set whether this StreamMusicReference will loop.
+		 * @param loop whether this StreamMusicReference will loop
+		 */
 		@Override
 		public synchronized void setLoop(boolean loop) {
 			this.loop = loop;
 		}
 
+		/**
+		 * Set the byte index of this StreamMusicReference.
+		 * @param position the byte index to set
+		 */
 		@Override
 		public synchronized void setPosition(long position) {
 			if (position >= 0 && position < this.numBytesPerChannel) {
@@ -295,13 +365,17 @@ public class StreamMusic implements Music {
 						this.position = 0;
 						this.skipBytes(position);
 					} catch (IOException e) {
-						System.err.println("Failed to open stream for Music");
+						System.err.println("Failed to open stream for StreamMusic");
 						this.playing = false;
 					}
 				}
 			}
 		}
 
+		/**
+		 * Set the loop-position byte index of this StreamMusicReference.
+		 * @param loopPosition the loop-position byte index to set
+		 */
 		@Override
 		public synchronized void setLoopPosition(long loopPosition) {
 			if (loopPosition >= 0 && loopPosition < this.numBytesPerChannel) {
@@ -309,59 +383,29 @@ public class StreamMusic implements Music {
 			}
 		}
 
+		/**
+		 * Set the volume of this StreamMusicReference.
+		 * @param volume the desired volume of this StreamMusicReference
+		 */
 		@Override
 		public synchronized void setVolume(double volume) {
 			this.volume = volume;
 		}
 
+		/**
+		 * Get the number of bytes remaining for each channel until the end of
+		 * this StreamMusicReference.
+		 * @return number of bytes remaining for each channel
+		 */
 		@Override
-		public synchronized void nextTwoBytes(int[] data, boolean bigEndian) {
-			//try to read audio data
-			int tmpRead = 0;
-			int numRead = 0;
-			try {
-				while (numRead < this.buf.length && tmpRead != -1) {
-					tmpRead = this.data.read(this.buf, numRead,
-							this.buf.length - numRead);
-					numRead += tmpRead;
-				}
-			} catch (IOException e) {
-				//this shouldn't happen if the bytes were written correctly to
-				//the temp file, but this sound should now be invalid at least
-				this.position = this.numBytesPerChannel;
-				System.err.println("Failed reading bytes for stream sound");
-			}
-			//copy the values into the caller buffer
-			if (bigEndian) {
-				//left
-				data[0] = ((this.buf[0] << 8) |
-						(this.buf[1] & 0xFF));
-				//right
-				data[1] = ((this.buf[2] << 8) |
-						(this.buf[3] & 0xFF));
-			}
-			else {
-				//left
-				data[0] = ((this.buf[1] << 8) |
-						(this.buf[0] & 0xFF));
-				//right
-				data[1] = ((this.buf[3] << 8) |
-						(this.buf[2] & 0xFF));
-			}
-			//increment the position appropriately
-			if (tmpRead == -1) { //reached end of file in the middle of reading
-				//this should never happen
-				this.position = this.numBytesPerChannel;
-			}
-			else {
-				this.position += 2;
-			}
-			//wrap if looping
-			if (this.loop && this.position >= this.numBytesPerChannel) {
-				this.setPosition(this.loopPosition);
-			}
+		public synchronized long bytesAvailable() {
+			return this.numBytesPerChannel - this.position;
 		}
 
+		/**
+		 * Skip a specified number of bytes of the audio data.
+		 * @param num number of bytes to skip
+		 */
 		@Override
 		public synchronized void skipBytes(long num) {
 			//couple of shortcuts if we are going to complete the stream
@@ -414,8 +458,63 @@ public class StreamMusic implements Music {
 		}
 
 		/**
+		 * Get the next two bytes from the music data in the specified
+		 * endianness.
+		 * @param data length-2 array to write in next two bytes from each
+		 * channel
+		 * @param bigEndian true if the bytes should be read big-endian
+		 */
+		@Override
+		public synchronized void nextTwoBytes(int[] data, boolean bigEndian) {
+			//try to read audio data
+			int tmpRead = 0;
+			int numRead = 0;
+			try {
+				while (numRead < this.buf.length && tmpRead != -1) {
+					tmpRead = this.data.read(this.buf, numRead,
+							this.buf.length - numRead);
+					numRead += tmpRead;
+				}
+			} catch (IOException e) {
+				//this shouldn't happen if the bytes were written correctly to
+				//the temp file, but this sound should now be invalid at least
+				this.position = this.numBytesPerChannel;
+				System.err.println("Failed reading bytes for stream sound");
+			}
+			//copy the values into the caller buffer
+			if (bigEndian) {
+				//left
+				data[0] = ((this.buf[0] << 8) |
+						(this.buf[1] & 0xFF));
+				//right
+				data[1] = ((this.buf[2] << 8) |
+						(this.buf[3] & 0xFF));
+			}
+			else {
+				//left
+				data[0] = ((this.buf[1] << 8) |
+						(this.buf[0] & 0xFF));
+				//right
+				data[1] = ((this.buf[3] << 8) |
+						(this.buf[2] & 0xFF));
+			}
+			//increment the position appropriately
+			if (tmpRead == -1) { //reached end of file in the middle of reading
+				//this should never happen
+				this.position = this.numBytesPerChannel;
+			}
+			else {
+				this.position += 2;
+			}
+			//wrap if looping
+			if (this.loop && this.position >= this.numBytesPerChannel) {
+				this.setPosition(this.loopPosition);
+			}
+		}
+
+		/**
 		 * Does any cleanup necessary to dispose of resources in use by this
-		 * MusicReference.
+		 * StreamMusicReference.
 		 */
 		@Override
 		public synchronized void dispose() {

@@ -40,6 +40,7 @@ public class Mixer {
 	
 	private List<MusicReference> musics;
 	private List<SoundReference> sounds;
+	private double globalVolume;
 	private int[] dataBuf; //buffer for reading sound data
 	
 	/**
@@ -48,7 +49,26 @@ public class Mixer {
 	public Mixer() {
 		this.musics = new ArrayList<MusicReference>();
 		this.sounds = new ArrayList<SoundReference>();
+		this.globalVolume = 1.0;
 		this.dataBuf = new int[2]; //2-channel
+	}
+	
+	/**
+	 * Get the global volume for this Mixer.
+	 * @return the global volume
+	 */
+	public synchronized double getVolume() {
+		return this.globalVolume;
+	}
+	
+	/**
+	 * Set the global volume for this Mixer.
+	 * @param volume the global volume to set
+	 */
+	public synchronized void setVolume(double volume) {
+		if (volume >= 0.0) {
+			this.globalVolume = volume;
+		}
 	}
 	
 	/**
@@ -129,9 +149,9 @@ public class Mixer {
 				MusicReference music = this.musics.get(m);
 				//is the music playing and are there bytes available
 				if (music.getPlaying() && music.bytesAvailable() > 0) {
-					//add this music to the mix by volume
+					//add this music to the mix by volume (and global volume)
 					music.nextTwoBytes(this.dataBuf, false);
-					double volume = music.getVolume();
+					double volume = music.getVolume() * this.globalVolume;
 					leftValue += (this.dataBuf[0] * volume);
 					rightValue += (this.dataBuf[1] * volume);
 					//we know we aren't done yet now
@@ -143,9 +163,9 @@ public class Mixer {
 				SoundReference sound = this.sounds.get(s);
 				//are there bytes available
 				if (sound.bytesAvailable() > 0) {
-					//add this sound to the mix by volume
+					//add this sound to the mix by volume (and global volume)
 					sound.nextTwoBytes(this.dataBuf, false);
-					double volume = sound.getVolume();
+					double volume = sound.getVolume() * this.globalVolume;
 					leftValue += (this.dataBuf[0] * volume);
 					rightValue += (this.dataBuf[1] * volume);
 					//we know we aren't done yet now

@@ -188,8 +188,32 @@ public class TinySound {
 	}
 	
 	/**
+	 * Get the global volume for all audio.
+	 * @return the global volume for all audio, -1.0 if TinySound has not been
+	 * initialized or has subsequently been shutdown
+	 */
+	public static double getGlobalVolume() {
+		if (!TinySound.inited) {
+			return -1.0;
+		}
+		return TinySound.mixer.getVolume();
+	}
+	
+	/**
+	 * Set the global volume.  This is an extra multiplier, not a replacement,
+	 * for all Music and Sound volume settings.  It starts at 1.0.
+	 * @param volume the global volume to set
+	 */
+	public static void setGlobalVolume(double volume) {
+		if (!TinySound.inited) {
+			return;
+		}
+		TinySound.mixer.setVolume(volume);
+	}
+	
+	/**
 	 * Load a Music by a resource name.  The resource must be on the classpath
-	 * for this to work.
+	 * for this to work.  This will store audio data in memory.
 	 * @param name name of the Music resource
 	 * @return Music resource as specified, null if not found/loaded
 	 */
@@ -197,7 +221,14 @@ public class TinySound {
 		return TinySound.loadMusic(name, false);
 	}
 	
-	//TODO comment
+	/**
+	 * Load a Music by a resource name.  The resource must be on the classpath
+	 * for this to work.
+	 * @param name name of the Music resource
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Music resource as specified, null if not found/loaded
+	 */
 	public static Music loadMusic(String name, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -222,7 +253,7 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Music by a File.
+	 * Load a Music by a File.  This will store audio data in memory.
 	 * @param file the Music file to load
 	 * @return Music from file as specified, null if not found/loaded
 	 */
@@ -230,7 +261,13 @@ public class TinySound {
 		return TinySound.loadMusic(file, false);
 	}
 	
-	//TODO
+	/**
+	 * Load a Music by a File.
+	 * @param file the Music file to load
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Music from file as specified, null if not found/loaded
+	 */
 	public static Music loadMusic(File file, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -252,7 +289,7 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Music by a URL.
+	 * Load a Music by a URL.  This will store audio data in memory.
 	 * @param url the URL of the Music
 	 * @return Music from URL as specified, null if not found/loaded
 	 */
@@ -260,7 +297,13 @@ public class TinySound {
 		return TinySound.loadMusic(url, false);
 	}
 	
-	//TODO
+	/**
+	 * Load a Music by a URL.
+	 * @param url the URL of the Music
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Music from URL as specified, null if not found/loaded
+	 */
 	public static Music loadMusic(URL url, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -285,14 +328,20 @@ public class TinySound {
 		}
 		//handle differently if streaming from a file
 		if (streamFromFile) {
-			//TODO
 			StreamInfo info = TinySound.createFileStream(data);
 			//check for failure
 			if (info == null) {
 				return null;
 			}
-			return new StreamMusic(info.URL, info.NUM_BYTES_PER_CHANNEL,
-					TinySound.mixer);
+			//try to create it
+			StreamMusic sm = null;
+			try {
+				sm = new StreamMusic(info.URL, info.NUM_BYTES_PER_CHANNEL,
+						TinySound.mixer);
+			} catch (IOException e) {
+				System.err.println("Failed to create StreamMusic!");
+			}
+			return sm;
 		}
 		//construct the Music object and register it with the mixer
 		return new MemMusic(data[0], data[1], TinySound.mixer);
@@ -300,7 +349,7 @@ public class TinySound {
 	
 	/**
 	 * Load a Sound by a resource name.  The resource must be on the classpath
-	 * for this to work.
+	 * for this to work.  This will store audio data in memory.
 	 * @param name name of the Sound resource
 	 * @return Sound resource as specified, null if not found/loaded
 	 */
@@ -308,7 +357,14 @@ public class TinySound {
 		return TinySound.loadSound(name, false);
 	}
 	
-	//TODO
+	/**
+	 * Load a Sound by a resource name.  The resource must be on the classpath
+	 * for this to work.
+	 * @param name name of the Sound resource
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Sound resource as specified, null if not found/loaded
+	 */
 	public static Sound loadSound(String name, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -334,7 +390,7 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Sound by a File.
+	 * Load a Sound by a File.  This will store audio data in memory.
 	 * @param file the Sound file to load
 	 * @return Sound from file as specified, null if not found/loaded
 	 */
@@ -342,7 +398,13 @@ public class TinySound {
 		return TinySound.loadSound(file, false);
 	}
 	
-	//TODO
+	/**
+	 * Load a Sound by a File.
+	 * @param file the Sound file to load
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Sound from file as specified, null if not found/loaded
+	 */
 	public static Sound loadSound(File file, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -364,7 +426,7 @@ public class TinySound {
 	}
 	
 	/**
-	 * Load a Sound by a URL.
+	 * Load a Sound by a URL.  This will store audio data in memory.
 	 * @param url the URL of the Sound
 	 * @return Sound from URL as specified, null if not found/loaded
 	 */
@@ -372,7 +434,13 @@ public class TinySound {
 		return TinySound.loadSound(url, false);
 	}
 	
-	//TODO
+	/**
+	 * Load a Sound by a URL.  This will store audio data in memory.
+	 * @param url the URL of the Sound
+	 * @param streamFromFile true if this Music should be streamed from a
+	 * temporary file to reduce memory overhead
+	 * @return Sound from URL as specified, null if not found/loaded
+	 */
 	public static Sound loadSound(URL url, boolean streamFromFile) {
 		//check if the system is initialized
 		if (!TinySound.inited) {
@@ -397,15 +465,21 @@ public class TinySound {
 		}
 		//handle differently if streaming from file
 		if (streamFromFile) {
-			//TODO
 			StreamInfo info = TinySound.createFileStream(data);
 			//check for failure
 			if (info == null) {
 				return null;
 			}
-			TinySound.soundCount++;
-			return new StreamSound(info.URL, info.NUM_BYTES_PER_CHANNEL,
-					TinySound.mixer, TinySound.soundCount);
+			//try to create it
+			StreamSound ss = null;
+			try {
+				ss = new StreamSound(info.URL, info.NUM_BYTES_PER_CHANNEL,
+						TinySound.mixer, TinySound.soundCount);
+				TinySound.soundCount++;
+			} catch (IOException e) {
+				System.err.println("Failed to create StreamSound!");
+			}
+			return ss;
 		}
 		//construct the Sound object
 		TinySound.soundCount++;
@@ -706,7 +780,12 @@ public class TinySound {
 		return list.asArray();
 	}
 	
-	//TODO
+	/**
+	 * Dumps audio data to a temporary file for streaming and returns a
+	 * StreamInfo for the stream.
+	 * @param data the audio data to write to the temporary file
+	 * @return a StreamInfo for the stream
+	 */
 	private static StreamInfo createFileStream(byte[][] data) {
 		//first try to create a file for the data to live in
 		File temp = null;

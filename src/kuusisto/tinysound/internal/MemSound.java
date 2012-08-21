@@ -29,9 +29,8 @@ package kuusisto.tinysound.internal;
 import kuusisto.tinysound.Sound;
 
 /**
- * The Sound class is an abstraction for sound effects.  Sound objects should
- * only be loaded via the TinySound <code>loadSound()</code> functions.  Sound
- * can be played repeatedly in an overlapping fashion.
+ * The MemSound class is an implementation of the Sound interface that stores
+ * all audio data in memory for low latency.
  * 
  * @author Finn Kuusisto
  */
@@ -43,11 +42,12 @@ public class MemSound implements Sound {
 	private final int ID; //unique ID to match references
 	
 	/**
-	 * Construct a new Sound with the given data and Mixer which will handle
-	 * handle this Sound.
+	 * Construct a new MemSound with the given data and Mixer which will handle
+	 * this MemSound.
 	 * @param left left channel of sound data
 	 * @param right right channel of sound data
-	 * @param mixer Mixer that will handle this Sound
+	 * @param mixer Mixer that will handle this MemSound
+	 * @param id unique ID of this MemSound
 	 */
 	public MemSound(byte[] left, byte[] right, Mixer mixer, int id) {
 		this.left = left;
@@ -57,36 +57,40 @@ public class MemSound implements Sound {
 	}
 	
 	/**
-	 * Plays this Sound.
+	 * Plays this MemSound.
 	 */
+	@Override
 	public void play() {
 		this.play(1.0);
 	}
 	
 	/**
-	 * Plays this Sound with a specified volume.
-	 * @param volume the volume at which to play this Sound
+	 * Plays this MemSound with a specified volume.
+	 * @param volume the volume at which to play this MemSound
 	 */
+	@Override
 	public void play(double volume) {
-		//dispatch a SoundReference to the mixer
+		//dispatch a MemSoundReference to the mixer
 		SoundReference ref = new MemSoundReference(this.left, this.right,
 				volume, this.ID);
 		this.mixer.registerSoundReference(ref);
 	}
 	
 	/**
-	 * Stops this Sound from playing.  Note that if this Sound was played
-	 * repeatedly in an overlapping fashion, all instances of this Sound still
-	 * playing will be stopped.
+	 * Stops this MemSound from playing.  Note that if this MemSound was played
+	 * repeatedly in an overlapping fashion, all instances of this MemSound
+	 * still playing will be stopped.
 	 */
+	@Override
 	public void stop() {
 		this.mixer.unRegisterSoundReference(this.ID);
 	}
 	
 	/**
-	 * Unloads this Sound from the system.  Attempts to use this Sound after
-	 * unloading will result in error.
+	 * Unloads this MemSound from the system.  Attempts to use this MemSound
+	 * after unloading will result in error.
 	 */
+	@Override
 	public void unload() {
 		this.mixer.unRegisterSoundReference(this.ID);
 		this.mixer = null;
@@ -99,15 +103,14 @@ public class MemSound implements Sound {
 	/////////////
 	
 	/**
-	 * The SoundReference class is the Mixers interface to the audio data of a
-	 * Sound object.  SoundReference is an internal class of the TinySound
-	 * system and should be of no real concern to the average user of TinySound.
+	 * The MemSoundReference is an implementation of the SoundReference
+	 * interface.
 	 * 
 	 * @author Finn Kuusisto
 	 */
 	private static class MemSoundReference implements SoundReference {
 
-		public final int SOUND_ID; //parent Sound
+		public final int SOUND_ID; //parent MemSound
 		
 		private byte[] left;
 		private byte[] right;
@@ -115,11 +118,11 @@ public class MemSound implements Sound {
 		private double volume;
 		
 		/**
-		 * Construct a new SoundReference with the given reference data.
+		 * Construct a new MemSoundReference with the given reference data.
 		 * @param left left channel of sound data
 		 * @param right right channel of sound data
 		 * @param volume volume at which to play the sound
-		 * @param soundID ID of the Sound for which this is a reference
+		 * @param soundID ID of the MemSound for which this is a reference
 		 */
 		public MemSoundReference(byte[] left, byte[] right, double volume,
 				int soundID) {
@@ -131,8 +134,8 @@ public class MemSound implements Sound {
 		}
 
 		/**
-		 * Get the ID of the Sound that produced this SoundReference.
-		 * @return the ID of this SoundReference's parent Sound
+		 * Get the ID of the MemSound that produced this MemSoundReference.
+		 * @return the ID of this MemSoundReference's parent MemSound
 		 */
 		@Override
 		public int getSoundID() {
@@ -140,8 +143,8 @@ public class MemSound implements Sound {
 		}
 		
 		/**
-		 * Gets the volume of this SoundReference.
-		 * @return volume of this SoundReference
+		 * Gets the volume of this MemSoundReference.
+		 * @return volume of this MemSoundReference
 		 */
 		@Override
 		public double getVolume() {
@@ -196,7 +199,7 @@ public class MemSound implements Sound {
 
 		/**
 		 * Does any cleanup necessary to dispose of resources in use by this
-		 * SoundReference.
+		 * MemSoundReference.
 		 */
 		@Override
 		public void dispose() {

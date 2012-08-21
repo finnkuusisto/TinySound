@@ -61,6 +61,18 @@ When a Sound is played it is queued to be played from the speakers once.  Of
 course, you can play a Sound multiple times in an overlapping fashion so it is
 generally useful for sound effects.  See the Javadocs for more detail.
 
+Memory Usage
+------------
+The basic loading functions for Music and Sound objects produce implementations
+that store all audio data in memory.  This is good for maintaining low latency,
+but can also require a lot of heap space if you load many, or particularly long,
+audio resources.  There are loading functions available that allow you to
+request that the audio data be streamed from a file.  If this is requested, the
+audio data will first be converted as usual and then written to a temporary file
+from which it will be streamed.  This will dramatically reduce the overall
+memory usage (after loading), but can potentially introduce occasional latency
+when reading from disk.
+
 Example
 -------
 There is a very simple example provided in the example directory.  You'll need
