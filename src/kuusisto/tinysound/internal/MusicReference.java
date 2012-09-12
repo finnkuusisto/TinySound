@@ -103,6 +103,13 @@ public interface MusicReference {
 	public long bytesAvailable();
 	
 	/**
+	 * Determine if there are no bytes remaining and play has stopped.
+	 * @return true if there are no bytes remaining and the reference is no
+	 * longer playing
+	 */
+	public boolean done();
+	
+	/**
 	 * Skip a specified number of bytes of the audio data.
 	 * @param num number of bytes to skip
 	 */

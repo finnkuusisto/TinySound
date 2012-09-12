@@ -64,8 +64,8 @@ public class MemMusic implements Music {
 	 */
 	@Override
 	public void play(boolean loop) {
-		this.reference.setPlaying(true);
 		this.reference.setLoop(loop);
+		this.reference.setPlaying(true);
 	}
 	
 	/**
@@ -75,9 +75,9 @@ public class MemMusic implements Music {
 	 */
 	@Override
 	public void play(boolean loop, double volume) {
-		this.reference.setPlaying(true);
 		this.setLoop(loop);
 		this.setVolume(volume);
+		this.reference.setPlaying(true);
 	}
 	
 	/**
@@ -129,6 +129,15 @@ public class MemMusic implements Music {
 	@Override
 	public boolean playing() {
 		return this.reference.getPlaying();
+	}
+	
+	/**
+	 * Determine if this MemMusic has reached its end and is done playing.
+	 * @return true if this MemMusic has reached the end and is done playing
+	 */
+	@Override
+	public boolean done() {
+		return this.reference.done();
 	}
 	
 	/**
@@ -383,6 +392,17 @@ public class MemMusic implements Music {
 		}
 		
 		/**
+		 * Determine if there are no bytes remaining and play has stopped.
+		 * @return true if there are no bytes remaining and the reference is no
+		 * longer playing
+		 */
+		@Override
+		public synchronized boolean done() {
+			long available = this.left.length - this.position;
+			return available <= 0 && !this.playing;
+		}
+		
+		/**
 		 * Skip a specified number of bytes of the audio data.
 		 * @param num number of bytes to skip
 		 */
@@ -390,9 +410,14 @@ public class MemMusic implements Music {
 		public synchronized void skipBytes(long num) {
 			for (int i = 0; i < num; i++) {
 				this.position++;
-				//wrap if looping
-				if (this.loop && this.position >= this.left.length) {
-					this.position = this.loopPosition;
+				//wrap if looping, stop otherwise
+				if (this.position >= this.left.length) {
+					if (this.loop) {
+						this.position = this.loopPosition;
+					}
+					else {
+						this.playing = false;
+					}
 				}
 			}
 		}
@@ -423,9 +448,14 @@ public class MemMusic implements Music {
 						(this.right[this.position] & 0xFF));
 			}
 			this.position += 2;
-			//wrap if looping
-			if (this.loop && this.position >= this.left.length) {
-				this.position = this.loopPosition;
+			//wrap if looping, stop otherwise
+			if (this.position >= this.left.length) {
+				if (this.loop) {
+					this.position = this.loopPosition;
+				}
+				else {
+					this.playing = false;
+				}
 			}
 		}
 

@@ -80,6 +80,12 @@ public interface Music {
 	public boolean playing();
 	
 	/**
+	 * Determine if this Music has reached its end and is done playing.
+	 * @return true if this Music is at the end and is done playing
+	 */
+	public boolean done();
+	
+	/**
 	 * Determine if this Music will loop.
 	 * @return true if this Music will loop
 	 */
