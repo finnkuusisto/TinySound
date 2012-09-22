@@ -80,11 +80,22 @@ public class StreamSound implements Sound {
 	 */
 	@Override
 	public void play(double volume) {
+		this.play(volume, 0.0);
+	}
+
+	/**
+	 * Plays this MemSound with a specified volume and pan.
+	 * @param volume the volume at which to play this MemSound
+	 * @param pan the pan value to play this MemSound [-1.0,1.0], values outside
+	 * the valid range will assume no panning (0.0)
+	 */
+	@Override
+	public void play(double volume, double pan) {
 		//dispatch a SoundReference to the mixer
 		SoundReference ref;
 		try {
 			ref = new StreamSoundReference(this.dataURL.openStream(),
-					this.numBytesPerChannel, volume, this.ID);
+					this.numBytesPerChannel, volume, pan, this.ID);
 			this.mixer.registerSoundReference(ref);
 		} catch (IOException e) {
 			System.err.println("Failed to open stream for Sound");
@@ -130,6 +141,7 @@ public class StreamSound implements Sound {
 		private long numBytesPerChannel; //not per frame, but the whole sound
 		private long position;
 		private double volume;
+		private double pan;
 		private byte[] buf;
 		private byte[] skipBuf;
 		
@@ -139,13 +151,15 @@ public class StreamSound implements Sound {
 		 * @param numBytesPerChannel the total number of bytes for each channel
 		 * in the stream
 		 * @param volume volume at which to play the sound
+		 * @param pan pan at which to play the sound
 		 * @param soundID ID of the StreamSound for which this is a reference
 		 */
 		public StreamSoundReference(InputStream data, long numBytesPerChannel,
-				double volume, int soundID) {
+				double volume, double pan, int soundID) {
 			this.data = data;
 			this.numBytesPerChannel = numBytesPerChannel;
 			this.volume = (volume >= 0.0) ? volume : 1.0;
+			this.pan = (pan >= -1.0 && pan <= 1.0) ? pan : 0.0;
 			this.position = 0;
 			this.buf = new byte[4];
 			this.skipBuf = new byte[20];
@@ -169,6 +183,15 @@ public class StreamSound implements Sound {
 		@Override
 		public double getVolume() {
 			return this.volume;
+		}
+
+		/**
+		 * Gets the pan of this StreamSoundReference.
+		 * @return pan of this StreamSoundReference
+		 */
+		@Override
+		public double getPan() {
+			return this.pan;
 		}
 
 		/**

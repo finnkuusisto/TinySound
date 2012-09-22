@@ -70,9 +70,20 @@ public class MemSound implements Sound {
 	 */
 	@Override
 	public void play(double volume) {
-		//dispatch a MemSoundReference to the mixer
+		this.play(volume, 0.0);
+	}
+
+	/**
+	 * Plays this MemSound with a specified volume and pan.
+	 * @param volume the volume at which to play this MemSound
+	 * @param pan the pan value to play this MemSound [-1.0,1.0], values outside
+	 * the valid range will assume no panning (0.0)
+	 */
+	@Override
+	public void play(double volume, double pan) {
+		//dispatch a sound refence to the mixer
 		SoundReference ref = new MemSoundReference(this.left, this.right,
-				volume, this.ID);
+				volume, pan, this.ID);
 		this.mixer.registerSoundReference(ref);
 	}
 	
@@ -116,19 +127,22 @@ public class MemSound implements Sound {
 		private byte[] right;
 		private int position;
 		private double volume;
+		private double pan;
 		
 		/**
 		 * Construct a new MemSoundReference with the given reference data.
 		 * @param left left channel of sound data
 		 * @param right right channel of sound data
 		 * @param volume volume at which to play the sound
+		 * @param pan pan at which to play the sound
 		 * @param soundID ID of the MemSound for which this is a reference
 		 */
 		public MemSoundReference(byte[] left, byte[] right, double volume,
-				int soundID) {
+				double pan, int soundID) {
 			this.left = left;
 			this.right = right;
 			this.volume = (volume >= 0.0) ? volume : 1.0;
+			this.pan = (pan >= -1.0 && pan <= 1.0) ? pan : 0.0;
 			this.position = 0;
 			this.SOUND_ID = soundID;
 		}
@@ -149,6 +163,15 @@ public class MemSound implements Sound {
 		@Override
 		public double getVolume() {
 			return this.volume;
+		}
+
+		/**
+		 * Gets the pan of this MemSoundReference.
+		 * @return pan of this MemSoundReference
+		 */
+		@Override
+		public double getPan() {
+			return this.pan;
 		}
 		
 		/**
@@ -207,6 +230,7 @@ public class MemSound implements Sound {
 			this.left = null;
 			this.right = null;
 		}
+		
 	}
 
 }

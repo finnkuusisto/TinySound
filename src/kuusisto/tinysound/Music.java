@@ -49,6 +49,15 @@ public interface Music {
 	public void play(boolean loop, double volume);
 	
 	/**
+	 * Play this Music at the specified volume and pan, and loop if specified.
+	 * @param loop if this Music should loop
+	 * @param volume the volume to play the this Music
+	 * @param pan the pan at which to play this Music [-1.0,1.0], values outside
+	 * the valid range will be ignored
+	 */
+	public void play(boolean loop, double volume, double pan);
+	
+	/**
 	 * Stop playing this Music and set its position to the beginning.
 	 */
 	public void stop();
@@ -132,6 +141,19 @@ public interface Music {
 	 * @param volume the desired volume of this Music
 	 */
 	public void setVolume(double volume);
+	
+	/**
+	 * Get the pan of this Music.
+	 * @return pan of this Music
+	 */
+	public double getPan();
+	
+	/**
+	 * Set the pan of this Music.  Must be between -1.0 (full pan left) and 1.0
+	 * (full pan right).  Values outside the valid range will be ignored.
+	 * @param pan the desired pan of this Music
+	 */
+	public void setPan(double pan);
 	
 	/**
 	 * Unload this Music from the system.  Attempts to use this Music after

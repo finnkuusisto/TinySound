@@ -59,7 +59,7 @@ public class StreamMusic implements Music {
 		this.dataURL = dataURL;
 		this.mixer = mixer;
 		this.reference = new StreamMusicReference(this.dataURL, false, false, 0,
-				0, numBytesPerChannel, 1.0);
+				0, numBytesPerChannel, 1.0, 0.0);
 		this.mixer.registerMusicReference(this.reference);
 	}
 
@@ -82,6 +82,22 @@ public class StreamMusic implements Music {
 	public void play(boolean loop, double volume) {
 		this.setLoop(loop);
 		this.setVolume(volume);
+		this.reference.setPlaying(true);
+	}
+	
+	/**
+	 * Play this StreamMusic at the specified volume and pan, and loop if
+	 * specified.
+	 * @param loop if this StreamMusic should loop
+	 * @param volume the volume to play the this StreamMusic
+	 * @param pan the pan at which to play this StreamMusic [-1.0,1.0], values
+	 * outside the valid range will be ignored
+	 */
+	@Override
+	public void play(boolean loop, double volume, double pan) {
+		this.setLoop(loop);
+		this.setVolume(volume);
+		this.setPan(pan);
 		this.reference.setPlaying(true);
 	}
 	
@@ -236,6 +252,28 @@ public class StreamMusic implements Music {
 	}
 
 	/**
+	 * Get the pan of this StreamMusic.
+	 * @return pan of this StreamMusic
+	 */
+	@Override
+	public double getPan() {
+		return this.reference.getPan();
+	}
+
+	/**
+	 * Set the pan of this StreamMusic.  Must be between -1.0 (full pan left)
+	 * and 1.0 (full pan right).  Values outside the valid range will be ignored
+	 * .
+	 * @param pan the desired pan of this StreamMusic
+	 */
+	@Override
+	public void setPan(double pan) {
+		if (pan >= -1.0 && pan <= 1.0) {
+			this.reference.setPan(pan);
+		}
+	}
+
+	/**
 	 * Unload this MemMusic from the system.  Attempts to use this MemMusic
 	 * after unloading will result in error.
 	 */
@@ -269,6 +307,7 @@ public class StreamMusic implements Music {
 		private long loopPosition;
 		private long position;
 		private double volume;
+		private double pan;
 		
 		/**
 		 * Constructs a new StreamMusicReference with the given audio data and
@@ -281,11 +320,12 @@ public class StreamMusic implements Music {
 		 * @param numBytesPerChannel the total number of bytes for each channel
 		 * in the file
 		 * @param volume volume to play the music
+		 * @param pan pan to play the music
 		 * @throws IOException if a stream cannot be opened from the URL
 		 */
 		public StreamMusicReference(URL dataURL, boolean playing, boolean loop,
 				long loopPosition, long position, long numBytesPerChannel,
-				double volume) throws IOException {
+				double volume, double pan) throws IOException {
 			this.url = dataURL;
 			this.playing = playing;
 			this.loop = loop;
@@ -293,6 +333,7 @@ public class StreamMusic implements Music {
 			this.position = position;
 			this.numBytesPerChannel = numBytesPerChannel;
 			this.volume = volume;
+			this.pan = pan;
 			this.buf = new byte[4];
 			this.skipBuf = new byte[50];
 			//now get the data stream
@@ -342,6 +383,15 @@ public class StreamMusic implements Music {
 		@Override
 		public synchronized double getVolume() {
 			return this.volume;
+		}
+
+		/**
+		 * Get the pan of this StreamMusicReference.
+		 * @return pan of this StreamMusicReference
+		 */
+		@Override
+		public synchronized double getPan() {
+			return this.pan;
 		}
 
 		/**
@@ -411,6 +461,16 @@ public class StreamMusic implements Music {
 		@Override
 		public synchronized void setVolume(double volume) {
 			this.volume = volume;
+		}
+
+		/**
+		 * Set the pan of this StreamMusicReference.  Must be between -1.0 (full
+		 * pan left) and 1.0 (full pan right).
+		 * @param pan the desired pan of this StreamMusicReference
+		 */
+		@Override
+		public synchronized void setPan(double pan) {
+			this.pan = pan;
 		}
 
 		/**

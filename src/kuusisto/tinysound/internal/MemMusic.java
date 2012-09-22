@@ -54,7 +54,7 @@ public class MemMusic implements Music {
 		this.right = right;
 		this.mixer = mixer;
 		this.reference = new MemMusicReference(this.left, this.right, false,
-				false, 0, 0, 1.0);
+				false, 0, 0, 1.0, 0.0);
 		this.mixer.registerMusicReference(this.reference);
 	}
 	
@@ -77,6 +77,22 @@ public class MemMusic implements Music {
 	public void play(boolean loop, double volume) {
 		this.setLoop(loop);
 		this.setVolume(volume);
+		this.reference.setPlaying(true);
+	}
+	
+	/**
+	 * Play this MemMusic at the specified volume and pan, and loop if specified
+	 * .
+	 * @param loop if this MemMusic should loop
+	 * @param volume the volume to play the this MemMusic
+	 * @param pan the pan at which to play this MemMusic [-1.0,1.0], values
+	 * outside the valid range will be ignored
+	 */
+	@Override
+	public void play(boolean loop, double volume, double pan) {
+		this.setLoop(loop);
+		this.setVolume(volume);
+		this.setPan(pan);
 		this.reference.setPlaying(true);
 	}
 	
@@ -229,6 +245,27 @@ public class MemMusic implements Music {
 			this.reference.setVolume(volume);
 		}
 	}
+
+	/**
+	 * Get the pan of this MemMusic.
+	 * @return pan of this MemMusic
+	 */
+	@Override
+	public double getPan() {
+		return this.reference.getPan();
+	}
+
+	/**
+	 * Set the pan of this MemMusic.  Must be between -1.0 (full pan left) and
+	 * 1.0 (full pan right).  Values outside the valid range will be ignored.
+	 * @param pan the desired pan of this MemMusic
+	 */
+	@Override
+	public void setPan(double pan) {
+		if (pan >= -1.0 && pan <= 1.0) {
+			this.reference.setPan(pan);
+		}
+	}
 	
 	/**
 	 * Unload this MemMusic from the system.  Attempts to use this MemMusic
@@ -264,6 +301,7 @@ public class MemMusic implements Music {
 		private int loopPosition;
 		private int position;
 		private double volume;
+		private double pan;
 		
 		/**
 		 * Construct a new MemMusicReference with the given audio data and
@@ -275,9 +313,11 @@ public class MemMusic implements Music {
 		 * @param loopPosition byte index of the loop position in music data
 		 * @param position byte index position in music data
 		 * @param volume volume to play the music
+		 * @param pan pan to play the music
 		 */
 		public MemMusicReference(byte[] left, byte[] right, boolean playing,
-				boolean loop, int loopPosition, int position, double volume) {
+				boolean loop, int loopPosition, int position, double volume,
+				double pan) {
 			this.left = left;
 			this.right = right;
 			this.playing = playing;
@@ -285,6 +325,7 @@ public class MemMusic implements Music {
 			this.loopPosition = loopPosition;
 			this.position = position;
 			this.volume = volume;
+			this.pan = pan;
 		}
 		
 		/**
@@ -330,6 +371,15 @@ public class MemMusic implements Music {
 		@Override
 		public synchronized double getVolume() {
 			return this.volume;
+		}
+
+		/**
+		 * Get the pan of this MemMusicReference.
+		 * @return pan of this MemMusicReference
+		 */
+		@Override
+		public synchronized double getPan() {
+			return this.pan;
 		}
 		
 		/**
@@ -379,6 +429,16 @@ public class MemMusic implements Music {
 		@Override
 		public synchronized void setVolume(double volume) {
 			this.volume = volume;
+		}
+
+		/**
+		 * Set the pan of this MemMusicReference.  Must be between -1.0 (full
+		 * pan left) and 1.0 (full pan right).
+		 * @param pan the desired pan of this MemMusicReference
+		 */
+		@Override
+		public synchronized void setPan(double pan) {
+			this.pan = pan;
 		}
 		
 		/**

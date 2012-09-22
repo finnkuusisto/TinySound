@@ -48,6 +48,12 @@ public interface SoundReference {
 	public double getVolume();
 	
 	/**
+	 * Gets the pan of this SoundReference.
+	 * @return pan of this SoundReference
+	 */
+	public double getPan();
+	
+	/**
 	 * Get the number of bytes remaining for each channel.
 	 * @return number of bytes remaining for each channel
 	 */

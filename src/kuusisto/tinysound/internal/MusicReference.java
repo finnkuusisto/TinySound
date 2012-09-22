@@ -66,6 +66,12 @@ public interface MusicReference {
 	public double getVolume();
 	
 	/**
+	 * Get the pan of this MusicReference.
+	 * @return pan of this MusicReference
+	 */
+	public double getPan();
+	
+	/**
 	 * Set whether this MusicReference is playing.
 	 * @param playing whether this MusicReference is playing
 	 */
@@ -94,6 +100,13 @@ public interface MusicReference {
 	 * @param volume the desired volume of this MusicReference
 	 */
 	public void setVolume(double volume);
+	
+	/**
+	 * Set the pan of this MusicReference.  Must be between -1.0 (full pan left)
+	 * and 1.0 (full pan right).
+	 * @param pan the desired pan of this MusicReference
+	 */
+	public void setPan(double pan);
 	
 	/**
 	 * Get the number of bytes remaining for each channel until the end of this
