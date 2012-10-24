@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Tinysound : Simple library for playing sounds and music in Java" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Tinysound</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/finnkuusisto/TinySound">View on GitHub</a>
+
+          <h1 id="project_title">Tinysound</h1>
+          <h2 id="project_tagline">Simple library for playing sounds and music in Java</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/finnkuusisto/TinySound/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/finnkuusisto/TinySound/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>About</h2>
+
+<p>TinySound is a simple sound system that wraps the standard Java sound libraries.
+It is "tiny" in that it is intended to have a small, easy-to-use interface with
+everything that you need to play sounds and music, and nothing that you don't.</p>
+
+<h2>Releases</h2>
+
+<p>If you would just like to download the jar files, see the downloads page:<br><a href="https://github.com/finnkuusisto/TinySound/downloads">https://github.com/finnkuusisto/TinySound/downloads</a></p>
+
+<h2>License</h2>
+
+<p>TinySound is licensed under the BSD 2-Clause license.  A copy of the license can
+be found in the header of every source file as well as in the LICENSE file
+included with the TinySound system.</p>
+
+<h2>Audio Formats</h2>
+
+<p>TinySound stores all audio as 16-bit, 44.1kHz, 2-channel, linear PCM data
+internally.  It makes an effort to convert other formats, but will not be able
+to handle all formats.  As for container formats, TinySound should be able to
+load any container types supported by your version of Java.  This should include
+WAV at the very least.
+TinySound can also load Ogg files containing audio in the Vorbis format with the
+inclusion of the libraries found in the lib directory.  If you intend to use Ogg
+Vorbis files with TinySound just include the jorbis, tritonus_share and
+vorbisspi jar files on your CLASSPATH along with TinySound.</p>
+
+<h2>Javadocs</h2>
+
+<p>You should only be concerned with the classes in the kuusisto.tinysound package.
+<a href="http://finnkuusisto.github.com/TinySound/doc">http://finnkuusisto.github.com/TinySound/doc</a></p>
+
+<h2>Using TinySound</h2>
+
+<p>There are 3 classes that you need to know when using TinySound: TinySound, Music
+and Sound.  TinySound is the main system class, Music is an abstraction for
+music, and Sound is an abstraction for a sound effect.  Simple.</p>
+
+<h4>TinySound</h4>
+
+<p>There are really only 2 steps you need to worry about with the TinySound class.
+1. Initialization
+2. Shutdown</p>
+
+<ol>
+<li><p>Initialization is accomplished via the init() function.  It takes no
+arguments and sets up the system for you to play audio data.  TinySound creates
+a daemon thread to automatically write audio data to the speakers.  For those
+with special requirements and who are very familiar with the Java sound
+libraries, there is an alternative init() function which allows selection of how
+a line is opened to the speakers.  See the Javadocs for more detail.</p></li>
+<li><p>Shutdown is accomplished via the shutdown() function.  This shuts down the
+update thread and clears resources in use.</p></li>
+</ol><h4>Music</h4>
+
+<p>You load Music objects via the TinySound loadMusic() functions.  Music objects
+can be started, stopped, paused, resumed, and looped from specified positions.
+If you are done using a particular Music object, you can also unload its sound
+data from the system via its unload() method.  See the Javadocs for more detail.</p>
+
+<h4>Sound</h4>
+
+<p>You load Sound objects via the TinySound loadSound() functions.  Sound objects
+work differently from Music objects as you can only play them (no pausing etc.).
+When a Sound is played it is queued to be played from the speakers once.  Of
+course, you can play a Sound multiple times in an overlapping fashion so it is
+generally useful for sound effects.  See the Javadocs for more detail.</p>
+
+<h2>Memory Usage</h2>
+
+<p>The basic loading functions for Music and Sound objects produce implementations
+that store all audio data in memory.  This is good for maintaining low latency,
+but can also require a lot of heap space if you load many, or particularly long,
+audio resources.  There are loading functions available that allow you to
+request that the audio data be streamed from a file.  If this is requested, the
+audio data will first be converted as usual and then written to a temporary file
+from which it will be streamed.  This will dramatically reduce the overall
+memory usage (after loading), but can potentially introduce occasional latency
+when reading from disk.</p>
+
+<h2>Example</h2>
+
+<p>There is a very simple example provided in the example directory.  You'll need
+sound resources with the specified names on the classpath if you want to try the
+example without modifying it.  Note that the example does not demonstrate all of
+TinySound's features.  See the Javadocs for more detail.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Tinysound maintained by <a href="https://github.com/finnkuusisto">finnkuusisto</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
