@@ -4,6 +4,11 @@ TinySound is a simple sound system that wraps the standard Java sound libraries.
 It is "tiny" in that it is intended to have a small, easy-to-use interface with
 everything that you need to play sounds and music, and nothing that you don't.
 
+Releases
+--------
+If you would just like to download the jar files, see the downloads page:
+https://github.com/finnkuusisto/TinySound/downloads
+
 License
 -------
 TinySound is licensed under the BSD 2-Clause license.  A copy of the license can
@@ -60,6 +65,18 @@ work differently from Music objects as you can only play them (no pausing etc.).
 When a Sound is played it is queued to be played from the speakers once.  Of
 course, you can play a Sound multiple times in an overlapping fashion so it is
 generally useful for sound effects.  See the Javadocs for more detail.
+
+Memory Usage
+------------
+The basic loading functions for Music and Sound objects produce implementations
+that store all audio data in memory.  This is good for maintaining low latency,
+but can also require a lot of heap space if you load many, or particularly long,
+audio resources.  There are loading functions available that allow you to
+request that the audio data be streamed from a file.  If this is requested, the
+audio data will first be converted as usual and then written to a temporary file
+from which it will be streamed.  This will dramatically reduce the overall
+memory usage (after loading), but can potentially introduce occasional latency
+when reading from disk.
 
 Example
 -------

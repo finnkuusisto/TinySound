@@ -25,77 +25,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package kuusisto.tinysound;
-import kuusisto.tinysound.internal.Mixer;
-import kuusisto.tinysound.internal.SoundReference;
 
 /**
- * The Sound class is an abstraction for sound effects.  Sound objects should
- * only be loaded via the TinySound <code>loadSound()</code> functions.  Sound
- * can be played repeatedly in an overlapping fashion.
+ * The Sound interface  is an abstraction for sound effects.  Sound objects
+ * should only be loaded via the TinySound <code>loadSound()</code> functions.
+ * Sounds can be played repeatedly in an overlapping fashion.
  * 
  * @author Finn Kuusisto
  */
-public class Sound {
-	
-	private static int soundCount = 0;
-	
-	private byte[] left;
-	private byte[] right;
-	private Mixer mixer;
-	private final int ID; //unique ID to match references
-	
-	/**
-	 * Construct a new Sound with the given data and Mixer which will handle
-	 * handle this Sound.
-	 * @param left left channel of sound data
-	 * @param right right channel of sound data
-	 * @param mixer Mixer that will handle this Sound
-	 */
-	public Sound(byte[] left, byte[] right, Mixer mixer) {
-		this.left = left;
-		this.right = right;
-		this.mixer = mixer;
-		//get the next ID
-		this.ID = Sound.soundCount;
-		Sound.soundCount++;
-	}
-	
+public interface Sound {
+
 	/**
 	 * Plays this Sound.
 	 */
-	public void play() {
-		this.play(1.0);
-	}
+	public void play();
 	
 	/**
 	 * Plays this Sound with a specified volume.
 	 * @param volume the volume at which to play this Sound
 	 */
-	public void play(double volume) {
-		//dispatch a SoundReference to the mixer
-		SoundReference ref = new SoundReference(this.left, this.right, volume,
-				this.ID);
-		this.mixer.registerSoundReference(ref);
-	}
+	public void play(double volume);
+	
+	/**
+	 * Plays this Sound with a specified volume and pan.
+	 * @param volume the volume at which to play this Sound
+	 * @param pan the pan value to play this Sound [-1.0,1.0], values outside
+	 * the valid range will assume no panning (0.0)
+	 */
+	public void play(double volume, double pan);
 	
 	/**
 	 * Stops this Sound from playing.  Note that if this Sound was played
 	 * repeatedly in an overlapping fashion, all instances of this Sound still
 	 * playing will be stopped.
 	 */
-	public void stop() {
-		this.mixer.unRegisterSoundReference(this.ID);
-	}
+	public void stop();
 	
 	/**
 	 * Unloads this Sound from the system.  Attempts to use this Sound after
 	 * unloading will result in error.
 	 */
-	public void unload() {
-		this.mixer.unRegisterSoundReference(this.ID);
-		this.mixer = null;
-		this.left = null;
-		this.right = null;
-	}
-
+	public void unload();
+	
 }
