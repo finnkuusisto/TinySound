@@ -1,0 +1,16 @@
+############
+# Compiled #
+############
+*.class
+
+#################
+# IDE Generated #
+#################
+.classpath
+.project
+.settings
+
+########
+# Misc #
+########
+*~
