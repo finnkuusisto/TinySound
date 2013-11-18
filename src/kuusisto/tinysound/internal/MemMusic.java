@@ -221,8 +221,8 @@ public class MemMusic implements Music {
 		//get the byte index for a channel
 		int bytesPerChannelForFrame = TinySound.FORMAT.getFrameSize() /
 			TinySound.FORMAT.getChannels();
-		long byteIndex = (long)(seconds * TinySound.FORMAT.getFrameRate() *
-			bytesPerChannelForFrame);
+		long byteIndex = (long)(seconds * TinySound.FORMAT.getFrameRate()) *
+			bytesPerChannelForFrame;
 		this.reference.setLoopPosition(byteIndex);
 	}
 	
