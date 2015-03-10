@@ -1,18 +1,23 @@
-## About ##
+About
+-----
 TinySound is a simple sound system that wraps the standard Java sound libraries.
 It is "tiny" in that it is intended to have a small, easy-to-use interface with
 everything that you need to play sounds and music, and nothing that you don't.
 
-## Releases ##
+Releases
+--------
 If you would just like to download the jar files, see the releases page:
+
 http://finnkuusisto.github.com/TinySound/releases
 
-## License ##
+License
+-------
 TinySound is licensed under the BSD 2-Clause license.  A copy of the license can
 be found in the header of every source file as well as in the LICENSE file
 included with the TinySound system.
 
-## Audio Formats ##
+Audio Formats
+-------------
 TinySound stores all audio as 16-bit, 44.1kHz, 2-channel, linear PCM data
 internally.  It makes an effort to convert other formats, but will not be able
 to handle all formats.  As for container formats, TinySound should be able to
@@ -23,12 +28,15 @@ inclusion of the libraries found in the lib directory.  If you intend to use Ogg
 Vorbis files with TinySound just include the jorbis, tritonus_share and
 vorbisspi jar files on your CLASSPATH along with TinySound.
 
-## Javadocs ##
+Javadocs
+--------
 You should only be concerned with the classes in the `kuusisto.tinysound`
 package.
+
 http://finnkuusisto.github.com/TinySound/doc
 
-## Using TinySound ##
+Using TinySound
+---------------
 There are 3 classes that you need to know when using TinySound: `TinySound`,
 `Music` and `Sound`.  TinySound is the main system class, Music is an
 abstraction for music, and Sound is an abstraction for a sound effect.  Simple.
@@ -62,7 +70,8 @@ When a Sound is played it is queued to be played from the speakers once.  Of
 course, you can play a Sound multiple times in an overlapping fashion so it is
 generally useful for sound effects.  See the Javadocs for more detail.
 
-## Memory Usage ##
+Memory Usage
+------------
 The basic loading functions for Music and Sound objects produce implementations
 that store all audio data in memory.  This is good for maintaining low latency,
 but can also require a lot of heap space if you load many, or particularly long,
@@ -73,7 +82,8 @@ from which it will be streamed.  This will dramatically reduce the overall
 memory usage (after loading), but can potentially introduce occasional latency
 when reading from disk.
 
-## Example ##
+Example
+-------
 There is a very simple example provided in the example directory.  You'll need
 sound resources with the specified names on the classpath if you want to try the
 example without modifying it.  Note that the example does not demonstrate all of

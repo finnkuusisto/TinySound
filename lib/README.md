@@ -14,17 +14,21 @@ can be found in the COPYING file included with the libraries.
 JOrbis
 ------
 JOrbis is a pure Java Ogg Vorbis decoder.
+
 http://www.jcraft.com/jorbis/
 
 Tritonus Share
 --------------
 Tritonus is an implementation of the Java Sound API.  Tritonus Share is a
 collection of classes required by all Tritonus plug-ins.
+
 http://www.tritonus.org
+
 http://www.tritonus.org/plugins.html
 
 VorbisSPI
 ---------
 VorbisSPI is a Java Service Provider Interface that adds OGG Vorbis support to
 the Java platform.
+
 http://www.javazoom.net/vorbisspi/vorbisspi.html
