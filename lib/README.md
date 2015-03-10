@@ -1,5 +1,5 @@
-What Are These Libraries
-------------------------
+What Are These Libraries?
+-------------------------
 These libraries together provide TinySound with the ability to load Ogg files
 containing audio data in the Vorbis format, or what normal people would just
 call Ogg Vorbis.
