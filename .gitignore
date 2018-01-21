@@ -9,6 +9,9 @@
 .classpath
 .project
 .settings
+target/
+.idea/
+*.iml
 
 ########
 # Misc #
